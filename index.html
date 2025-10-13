@@ -10,94 +10,95 @@
 			rel="stylesheet"
 			href="style.css" />
 	</head>
-	<!-- Win Modal -->
-	<div
-		id="winModal"
-		class="modal"
-		role="dialog"
-		aria-modal="true"
-		aria-labelledby="winTitle"
-		hidden>
+	<body>
+		<!-- Win Modal -->
 		<div
-			class="modal__backdrop"
-			data-close></div>
-		<div
-			class="modal__panel"
-			role="document">
-			<h2
-				id="winTitle"
-				class="modal__title">
-				🎉 Congratulations! You got it!
-			</h2>
-			<p
-				class="modal__subtitle"
-				id="winSub"></p>
+			id="winModal"
+			class="modal"
+			role="dialog"
+			aria-modal="true"
+			aria-labelledby="winTitle"
+			hidden>
+			<div
+				class="modal__backdrop"
+				data-close></div>
+			<div
+				class="modal__panel"
+				role="document">
+				<h2
+					id="winTitle"
+					class="modal__title">
+					🎉 Congratulations! You got it!
+				</h2>
+				<p
+					class="modal__subtitle"
+					id="winSub"></p>
 
-			<div class="modal__stats">
-				<div class="stat">
-					<div
-						class="num"
-						id="mTotal">
-						0
+				<div class="modal__stats">
+					<div class="stat">
+						<div
+							class="num"
+							id="mTotal">
+							0
+						</div>
+						<div class="lbl">Played</div>
 					</div>
-					<div class="lbl">Played</div>
-				</div>
-				<div class="stat">
-					<div
-						class="num"
-						id="mWinRate">
-						0%
+					<div class="stat">
+						<div
+							class="num"
+							id="mWinRate">
+							0%
+						</div>
+						<div class="lbl">Win Rate</div>
 					</div>
-					<div class="lbl">Win Rate</div>
-				</div>
-				<div class="stat">
-					<div
-						class="num"
-						id="mCurrent">
-						0
+					<div class="stat">
+						<div
+							class="num"
+							id="mCurrent">
+							0
+						</div>
+						<div class="lbl">Current Streak</div>
 					</div>
-					<div class="lbl">Current Streak</div>
-				</div>
-				<div class="stat">
-					<div
-						class="num"
-						id="mMax">
-						0
+					<div class="stat">
+						<div
+							class="num"
+							id="mMax">
+							0
+						</div>
+						<div class="lbl">Max Streak</div>
 					</div>
-					<div class="lbl">Max Streak</div>
 				</div>
-			</div>
 
-			<div class="modal__actions">
-				<button
-					class="btn btn-primary"
-					id="playAgainBtn">
-					Play Again
-				</button>
-				<button
-					class="btn"
-					id="modalShareBtn">
-					Share
-				</button>
-				<button
-					class="btn"
-					id="modalSettingsBtn">
-					Settings
-				</button>
-				<button
-					class="btn"
-					id="closeModalBtn"
-					aria-label="Close">
-					Close
-				</button>
+				<div class="modal__actions">
+					<button
+						class="btn btn-primary"
+						id="playAgainBtn">
+						Play Again
+					</button>
+					<button
+						class="btn"
+						id="modalShareBtn">
+						Share
+					</button>
+					<button
+						class="btn"
+						id="modalSettingsBtn">
+						Settings
+					</button>
+					<button
+						class="btn"
+						id="closeModalBtn"
+						aria-label="Close">
+						Close
+					</button>
+				</div>
 			</div>
 		</div>
-	</div>
-	<canvas
-		id="fx"
-		class="fx"
-		aria-hidden="true"></canvas>
-	<body>
+		<canvas
+			id="fx"
+			class="fx"
+			aria-hidden="true"></canvas>
+
 		<div class="wrap">
 			<h1 class="title">WORD GUESS</h1>
 			<header class="controls">
@@ -721,7 +722,9 @@
 				updateKeyboard(guess, res);
 				if (guess === target) {
 					setStatus(`Nice! You got it in ${row + 1}/${maxRows}.`);
-					markCompleted(wordLen, target, true, row + 1, /*showModal=*/ true); // ⬅️ pass flag
+					setTimeout(() => {
+						markCompleted(wordLen, target, true, row + 1, /*showModal=*/ true);
+					}, 200);
 					row = maxRows;
 					return;
 				}
@@ -729,8 +732,11 @@
 				col = 0;
 				if (row === maxRows) {
 					setStatus(`Answer was ${target.toUpperCase()}.`);
-					markCompleted(wordLen, target, false, maxRows);
-				} else setStatus("");
+					// Let markCompleted open a modal for loss too
+					markCompleted(wordLen, target, /*won=*/ false, maxRows, /*showModal=*/ true);
+				} else {
+					setStatus("");
+				}
 			}
 			function paintRow(r, res) {
 				for (let c = 0; c < wordLen; c++) {
@@ -775,45 +781,51 @@
 				updateStats();
 				syncPush();
 
-				if (won && showModal) {
-					openWinModal({ len, word, guesses });
+				if (showModal) {
+					openResultModal({ len, word, guesses, won });
 				} else {
-					// Loss or silent win: keep existing behavior
+					// fallback behavior if you ever call without modal
 					setTimeout(() => resetGame(len), 600);
 				}
 			}
 
 			// ---- Modal & fireworks ----
-			function openWinModal({ len, word, guesses }) {
-				// Stats
+			function openResultModal({ len, word, guesses, won }) {
+				const title = document.getElementById("winTitle");
+				const sub = document.getElementById("winSub");
+
+				// Stats snapshot
 				const s = computeStats(loadHistory());
 				document.getElementById("mTotal").textContent = s.total || 0;
 				document.getElementById("mWinRate").textContent = (s.winRate || 0) + "%";
 				document.getElementById("mCurrent").textContent = s.currentStreak || 0;
 				document.getElementById("mMax").textContent = s.maxStreak || 0;
-				document.body.style.overflow = 'hidden';
 
-				// Subtitle (answer + tries)
 				const tries = `${guesses}/${ATTEMPTS[len][difficulty]}`;
-				document.getElementById("winSub").textContent = `Solved ${len}-letter in ${tries}. Answer: ${word.toUpperCase()}`;
-				document.getElementById('winSub').textContent += ` • Mode: ${difficulty}, Strict: ${hardMode ? 'On' : 'Off'}`;
-				
-				// Show modal
+				if (won) {
+					title.textContent = "🎉 Congratulations! You got it!";
+					sub.textContent = `Solved ${len}-letter in ${tries}. Answer: ${word.toUpperCase()} • Mode: ${difficulty}, Strict: ${hardMode ? "On" : "Off"}`;
+				} else {
+					title.textContent = "So close!";
+					sub.textContent = `Out of tries (${tries}). Answer was ${word.toUpperCase()}. • Mode: ${difficulty}, Strict: ${hardMode ? "On" : "Off"}`;
+				}
+
 				const modal = document.getElementById("winModal");
 				modal.hidden = false;
+				document.body.style.overflow = "hidden";
 
-				// focus trapping (basic)
-				const firstBtn = document.getElementById("playAgainBtn");
-				firstBtn?.focus();
+				// focus
+				document.getElementById("playAgainBtn")?.focus();
 
-				// Fireworks
-				startFireworks(1800);
+				// Fireworks only on win
+				if (won) startFireworks(1800);
+				else stopFireworks();
 			}
 
 			function closeWinModal() {
 				const modal = document.getElementById("winModal");
 				modal.hidden = true;
-				document.body.style.overflow = '';
+				document.body.style.overflow = "";
 				stopFireworks();
 			}
 
