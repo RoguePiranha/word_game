@@ -554,16 +554,21 @@
 				return list?.includes(word.toLowerCase());
 			}
 			function score(guess, answer) {
-				const g = [...guess],
-					a = [...answer],
-					res = Array(wordLen).fill("no"),
-					used = Array(wordLen).fill(false);
+				// normalize to the same case so comparisons work
+				const g = [...guess.toLowerCase()];
+				const a = [...answer.toLowerCase()];
+
+				const res = Array(wordLen).fill("no");
+				const used = Array(wordLen).fill(false);
+
+				// greens
 				for (let i = 0; i < wordLen; i++) {
 					if (g[i] === a[i]) {
 						res[i] = "ok";
 						used[i] = true;
 					}
 				}
+				// yellows
 				for (let i = 0; i < wordLen; i++) {
 					if (res[i] === "ok") continue;
 					const idx = a.findIndex((ch, j) => !used[j] && ch === g[i]);
