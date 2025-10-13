@@ -857,8 +857,13 @@
 				document.getElementById("playAgainBtn")?.focus();
 
 				// Fireworks only on win
-				if (won) startFireworks(1800);
-				else stopFireworks();
+				if (won) {
+					console.log("Starting fireworks!");
+					startFireworks(3000);
+				} else {
+					console.log("No fireworks - game lost");
+					stopFireworks();
+				}
 			}
 
 			function closeWinModal() {
@@ -873,43 +878,58 @@
 				fxRunning = false,
 				fxParts = [];
 			function startFireworks(durationMs = 1500) {
+				console.log("startFireworks called with duration:", durationMs);
 				const cvs = document.getElementById("fx");
-				if (!cvs) return;
+				if (!cvs) {
+					console.error("Canvas element 'fx' not found!");
+					return;
+				}
+				console.log("Canvas found:", cvs);
 				const ctx = cvs.getContext("2d");
+				if (!ctx) {
+					console.error("Could not get 2d context!");
+					return;
+				}
+				console.log("Context obtained:", ctx);
 				const DPR = Math.max(1, window.devicePixelRatio || 1);
 				function resize() {
 					cvs.width = innerWidth * DPR;
 					cvs.height = innerHeight * DPR;
+					cvs.style.width = innerWidth + 'px';
+					cvs.style.height = innerHeight + 'px';
 				}
 				resize();
 				addEventListener("resize", resize, { once: true });
 
 				fxParts = [];
-				const colors = ["#56d364", "#e3b341", "#5b8cff", "#ff6b6b", "#a78bfa", "#34d399"];
+				const colors = ["#00ff00", "#ffff00", "#00ffff", "#ff0040", "#ff00ff", "#ff8000"];
 
 				// spawn particles from 3 bursts
 				function burst() {
-					const cx = Math.random() * cvs.width,
-						cy = Math.random() * cvs.height * 0.4 + cvs.height * 0.1;
-					for (let i = 0; i < 80; i++) {
+					const cx = Math.random() * innerWidth * DPR,
+						cy = (Math.random() * innerHeight * 0.4 + innerHeight * 0.1) * DPR;
+					for (let i = 0; i < 120; i++) {
 						const angle = Math.random() * Math.PI * 2;
-						const speed = Math.random() * 4 + 2;
+						const speed = (Math.random() * 4 + 2) * DPR;
 						fxParts.push({
 							x: cx,
 							y: cy,
 							vx: Math.cos(angle) * speed,
 							vy: Math.sin(angle) * speed,
-							life: 60 + ((Math.random() * 20) | 0),
+							life: 120 + ((Math.random() * 40) | 0),
 							color: colors[(Math.random() * colors.length) | 0],
 						});
 					}
 				}
 				burst();
-				setTimeout(burst, 300);
+				setTimeout(burst, 200);
+				setTimeout(burst, 400);
 				setTimeout(burst, 600);
+				setTimeout(burst, 800);
 
 				fxRunning = true;
 				const start = performance.now();
+				console.log("Starting animation loop, particles:", fxParts.length);
 				(function tick() {
 					fxRAF = requestAnimationFrame(tick);
 					ctx.clearRect(0, 0, cvs.width, cvs.height);
@@ -920,11 +940,12 @@
 						p.vy += 0.08 * DPR;
 						p.life--;
 						ctx.fillStyle = p.color;
-						ctx.globalAlpha = Math.max(0, p.life / 80);
-						ctx.fillRect(p.x, p.y, 3 * DPR, 3 * DPR);
+						ctx.globalAlpha = Math.max(0.1, p.life / 120);
+						ctx.fillRect(p.x, p.y, 6 * DPR, 6 * DPR);
 					}
 					fxParts = fxParts.filter((p) => p.life > 0);
 					if (performance.now() - start > durationMs && fxParts.length === 0) {
+						console.log("Fireworks completed");
 						stopFireworks();
 					}
 				})();
