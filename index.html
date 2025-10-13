@@ -723,7 +723,7 @@
 				if (guess === target) {
 					setStatus(`Nice! You got it in ${row + 1}/${maxRows}.`);
 					setTimeout(() => {
-						markCompleted(wordLen, target, true, row + 1, /*showModal=*/ true);
+						markCompleted(wordLen, target, true, row + 1, showModal= true);
 					}, 200);
 					row = maxRows;
 					return;
@@ -733,7 +733,7 @@
 				if (row === maxRows) {
 					setStatus(`Answer was ${target.toUpperCase()}.`);
 					// Let markCompleted open a modal for loss too
-					markCompleted(wordLen, target, /*won=*/ false, maxRows, /*showModal=*/ true);
+					markCompleted(wordLen, target,won= false, maxRows, showModal= true);
 				} else {
 					setStatus("");
 				}
