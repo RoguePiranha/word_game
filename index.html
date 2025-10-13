@@ -11,24 +11,24 @@
 			href="style.css" />
 	</head>
 	<body>
-        <div class="wrap">
-            <h1 class="title">WORD GUESS</h1>
+		<div class="wrap">
+			<h1 class="title">WORD GUESS</h1>
 			<header class="controls">
-                <div
-                    class="btn"
-                    id="new">
-                    New
-                </div>
-                <div
-                    class="btn"
-                    id="reveal">
-                    Reveal
-                </div>
-                <div
-                    class="btn"
-                    id="copy">
-                    Share
-                </div>
+				<div
+					class="btn"
+					id="new">
+					New
+				</div>
+				<div
+					class="btn"
+					id="reveal">
+					Reveal
+				</div>
+				<div
+					class="btn"
+					id="copy">
+					Share
+				</div>
 				<details
 					id="settings"
 					class="settings">
@@ -145,69 +145,72 @@
 				</details>
 			</header>
 
-			<div
-				id="board"
-				class="board"
-				aria-live="polite"></div>
-			<div
-				class="status"
-				id="status"></div>
-
-			<details
-				class="stats"
-				id="statsPanel">
-				<summary>Stats</summary>
-				<div class="stats-grid">
-					<div class="stat">
-						<div
-							class="num"
-							id="stTotal">
-							0
+			<main
+				id="main"
+				class="main">
+				<div
+					id="board"
+					class="board"
+					aria-live="polite"></div>
+				<div
+					class="status"
+					id="status"></div>
+				<details
+					class="stats"
+					id="statsPanel">
+					<summary>Stats</summary>
+					<div class="stats-grid">
+						<div class="stat">
+							<div
+								class="num"
+								id="stTotal">
+								0
+							</div>
+							<div class="lbl">Played</div>
 						</div>
-						<div class="lbl">Played</div>
-					</div>
-					<div class="stat">
-						<div
-							class="num"
-							id="stWinRate">
-							0%
+						<div class="stat">
+							<div
+								class="num"
+								id="stWinRate">
+								0%
+							</div>
+							<div class="lbl">Win Rate</div>
 						</div>
-						<div class="lbl">Win Rate</div>
-					</div>
-					<div class="stat">
-						<div
-							class="num"
-							id="stCurrent">
-							0
+						<div class="stat">
+							<div
+								class="num"
+								id="stCurrent">
+								0
+							</div>
+							<div class="lbl">Current Streak</div>
 						</div>
-						<div class="lbl">Current Streak</div>
-					</div>
-					<div class="stat">
-						<div
-							class="num"
-							id="stMax">
-							0
+						<div class="stat">
+							<div
+								class="num"
+								id="stMax">
+								0
+							</div>
+							<div class="lbl">Max Streak</div>
 						</div>
-						<div class="lbl">Max Streak</div>
-					</div>
-					<div class="stat">
-						<div
-							class="num"
-							id="stL5">
-							0%
+						<div class="stat">
+							<div
+								class="num"
+								id="stL5">
+								0%
+							</div>
+							<div class="lbl">5-letter WR</div>
 						</div>
-						<div class="lbl">5-letter WR</div>
-					</div>
-					<div class="stat">
-						<div
-							class="num"
-							id="stL6">
-							0%
+						<div class="stat">
+							<div
+								class="num"
+								id="stL6">
+								0%
+							</div>
+							<div class="lbl">6-letter WR</div>
 						</div>
-						<div class="lbl">6-letter WR</div>
 					</div>
-				</div>
-			</details>
+				</details>
+			</main>
 		</div>
 
 		<script>
@@ -261,7 +264,6 @@
 					setStatus(`Couldn't load words-${len}.json. Place it in ./words/`);
 					return [];
 				}
-				if (!res.ok) throw new Error(`Failed to load words-${len}.json`);
 				const arr = await res.json();
 				wordCache[len] = arr.map((w) => String(w).toLowerCase());
 				return wordCache[len];
@@ -453,15 +455,17 @@
 				updateLayout();
 			}
 			function buildKeyboard() {
-				const kb =
-					document.getElementById("keyboard") ||
-					(() => {
-						const d = document.createElement("div");
-						d.id = "keyboard";
-						d.className = "keyboard";
-						board.after(d);
-						return d;
-					})();
+				const wrap = document.querySelector(".wrap");
+				let kb = document.getElementById("keyboard");
+				if (!kb) {
+					kb = document.createElement("div");
+					kb.id = "keyboard";
+					kb.className = "keyboard";
+					wrap.appendChild(kb); // ⬅️ append as LAST child
+				} else if (kb.parentElement !== wrap) {
+					wrap.appendChild(kb); // ensure it's last
+				}
+
 				const rows = ["QWERTYUIOP", "ASDFGHJKL", "↵ZXCVBNM⌫"];
 				kb.innerHTML = "";
 				rows.forEach((r) => {
