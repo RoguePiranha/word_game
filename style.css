@@ -142,6 +142,16 @@ header {
 	border-color: #38b24e;
 	color: #061106;
 }
+/* Tiles — high-contrast and override earlier rules */
+.board .tile.ok    { background: var(--ok);    border-color: var(--ok);    color:#061106 !important; }
+.board .tile.maybe { background: var(--maybe); border-color:#b78f1d;       color:#1a1300 !important; }
+.board .tile.no    { background:#0f111a;       border-color:#2b3144;       color:#9aa3c7 !important; }
+
+/* Keys — match the tile colors */
+.keyboard .key.ok    { background: var(--ok);    border-color:#38b24e; color:#061106 !important; }
+.keyboard .key.maybe { background: var(--maybe); border-color:#b78f1d; color:#1a1300 !important; }
+.keyboard .key.no    { background:#0f111a;       border-color:#2b3144; color:#9aa3c7 !important; }
+
 .status {
 	min-height: 24px;
 	color: var(--muted);

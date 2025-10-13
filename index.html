@@ -259,14 +259,32 @@
 			const wordCache = {};
 			async function loadWords(len) {
 				if (wordCache[len]) return wordCache[len];
-				const res = await fetch(`words/words-${len}.json`, { cache: "no-cache" });
-				if (!res.ok) {
-					setStatus(`Couldn't load words-${len}.json. Place it in ./words/`);
+
+				// Try these in order; first one that loads wins
+				const candidates = [`words/words-${len}.json`, `words/words-clean-${len}.json`, `words/words-base-${len}.json`];
+
+				let arr = [];
+				for (const url of candidates) {
+					try {
+						const res = await fetch(url, { cache: "no-cache" });
+						if (res.ok) {
+							arr = await res.json();
+							console.log(`[words] loaded ${url} (${arr.length})`);
+							break;
+						}
+					} catch (_) {}
+				}
+
+				if (!arr.length) {
+					setStatus(`Couldn't load any word list for ${len}. Place one in ./words/`);
 					return [];
 				}
-				const arr = await res.json();
-				wordCache[len] = arr.map((w) => String(w).toLowerCase());
-				return wordCache[len];
+
+				// normalize + sanity log
+				const list = arr.map((w) => String(w).toLowerCase());
+				wordCache[len] = list;
+				console.log(`[words] sample[${len}]:`, list.slice(0, 8));
+				return list;
 			}
 
 			/** === Seen/History (local) === */
@@ -782,8 +800,10 @@
 			async function init() {
 				try {
 					maxRows = ATTEMPTS[wordLen][difficulty];
-					const ok = await loadWords(wordLen); // returns [] on failure
-					if (!ok.length) throw new Error("No word list loaded");
+					const list = await loadWords(wordLen);
+					if (!list.length) throw new Error("No word list loaded");
+					WORDS[wordLen] = list; // ⬅️ ensure populated
+					VALID[wordLen] = list; // ⬅️ ensure populated
 
 					target = restoreCurrent() || (await pickTarget(wordLen));
 					buildBoard();
@@ -791,13 +811,12 @@
 					localStorage.setItem(`wg-current-${wordLen}`, target);
 					setStatus(`Guess the ${wordLen}-letter word • Attempts: ${maxRows}. Good luck!`);
 					updateStats();
-					// only try to sync if you’ve actually deployed the Worker
 					if (WORKER_BASE && WORKER_BASE.startsWith("http")) syncPull();
 					addEventListener("resize", updateLayout);
 					document.getElementById("statsPanel")?.addEventListener("toggle", updateLayout);
 				} catch (e) {
 					console.error(e);
-					setStatus("Init failed. Check that ./words/words-4..8.json exist.");
+					setStatus("Init failed. Check that ./words files exist.");
 				}
 			}
 			init();
