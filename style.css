@@ -20,6 +20,8 @@ body {
 	color: var(--text);
 	font-family: system-ui, Segoe UI, Roboto, Inter, Arial, sans-serif;
 	display: flex;
+	min-height: 100vh;
+	min-height: 100dvh;
 }
 .wrap {
 	display: flex;
@@ -29,6 +31,8 @@ body {
 	margin: auto;
 	width: 100%;
 	padding: 20px;
+	min-height: 100vh;
+	min-height: 100dvh;
 }
 header {
 	display: flex;
@@ -268,6 +272,16 @@ details.stats summary {
 		left: 0;
 		right: 0;
 		width: auto;
+		max-width: none;
+	}
+	.controls {
+		flex-direction: column;
+		align-items: stretch;
+		gap: 8px;
+	}
+	.controls .btn {
+		width: 100%;
+		text-align: center;
 	}
 }
 @media (max-width: 420px) {
@@ -275,9 +289,83 @@ details.stats summary {
 		grid-template-columns: repeat(2, 1fr);
 	}
 }
+/* Mobile board and layout improvements */
+@media (max-width: 768px) {
+	.wrap {
+		padding: 12px;
+		gap: 8px;
+	}
+	.main {
+		flex: 1;
+		justify-content: flex-start;
+		padding-top: 20px;
+	}
+	.board {
+		margin-bottom: 20px;
+	}
+}
+
+/* Mobile keyboard improvements */
+@media (max-width: 768px) {
+	.keyboard {
+		width: 100%;
+		padding: 0 10px;
+	}
+	.kb-row {
+		gap: 4px;
+		margin-bottom: 6px;
+	}
+	.key {
+		flex: 1;
+		min-width: 0;
+		max-width: none;
+		padding: 12px 4px;
+		font-size: 14px;
+	}
+	.key[data-key="↵"] {
+		flex: 1.5;
+	}
+	.key[data-key="⌫"] {
+		flex: 1.5;
+	}
+}
+
+@media (max-width: 480px) {
+	.wrap {
+		padding: 8px;
+		gap: 6px;
+	}
+	.title {
+		font-size: 1.5rem;
+		margin-bottom: 8px;
+	}
+	.main {
+		padding-top: 10px;
+	}
+	.key {
+		padding: 14px 2px;
+		font-size: 12px;
+	}
+}
+
 @media (max-width: 360px) {
 	:root {
-		--gap: 6px;
+		--gap: 4px;
+	}
+	.wrap {
+		padding: 6px;
+		gap: 4px;
+	}
+	.title {
+		font-size: 1.25rem;
+		margin-bottom: 4px;
+	}
+	.main {
+		padding-top: 8px;
+	}
+	.key {
+		padding: 16px 2px;
+		font-size: 11px;
 	}
 }
 
