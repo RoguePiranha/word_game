@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta
+			name="viewport"
+			content="width=device-width,initial-scale=1" />
+		<title>Word Guess</title>
+		<link
+			rel="stylesheet"
+			href="style.css" />
+	</head>
+	<body>
+        <div class="wrap">
+            <h1 class="title">WORD GUESS</h1>
+			<header class="controls">
+                <div
+                    class="btn"
+                    id="new">
+                    New
+                </div>
+                <div
+                    class="btn"
+                    id="reveal">
+                    Reveal
+                </div>
+                <div
+                    class="btn"
+                    id="copy">
+                    Share
+                </div>
+				<details
+					id="settings"
+					class="settings">
+					<summary
+						aria-label="Settings"
+						title="Settings">
+						⚙️
+					</summary>
+					<div class="settings-panel">
+						<div
+							class="controls"
+							role="group"
+							aria-label="Length & Mode">
+							<span class="config">Word Length:</span>
+							<button
+								class="btn diffL"
+								data-len="4"
+								aria-pressed="false">
+								4
+							</button>
+							<button
+								class="btn diffL"
+								data-len="5"
+								aria-pressed="true">
+								5
+							</button>
+							<button
+								class="btn diffL"
+								data-len="6"
+								aria-pressed="false">
+								6
+							</button>
+							<button
+								class="btn diffL"
+								data-len="7"
+								aria-pressed="false">
+								7
+							</button>
+							<button
+								class="btn diffL"
+								data-len="8"
+								aria-pressed="false">
+								8
+							</button>
+							<span
+								class="btn"
+								id="hard"
+								role="switch"
+								aria-checked="false"
+								title="Strict mode: must use revealed hints"
+								>Strict: Off</span
+							>
+						</div>
+
+						<div
+							class="controls"
+							role="group"
+							aria-label="Attempts Difficulty">
+							<span class="config">Difficulty:</span>
+							<button
+								class="btn diffA"
+								data-diff="base"
+								aria-pressed="true">
+								Base
+							</button>
+							<button
+								class="btn diffA"
+								data-diff="hard"
+								aria-pressed="false">
+								Hard
+							</button>
+							<button
+								class="btn diffA"
+								data-diff="expert"
+								aria-pressed="false">
+								Expert
+							</button>
+							<button
+								class="btn diffA"
+								data-diff="impossible"
+								aria-pressed="false">
+								Impossible
+							</button>
+						</div>
+
+						<div class="controls">
+							<div
+								class="btn"
+								id="history">
+								History
+							</div>
+							<div
+								class="btn"
+								id="resetSeen">
+								Reset Seen
+							</div>
+							<div
+								class="btn"
+								id="exportBtn">
+								Export
+							</div>
+							<label
+								class="btn"
+								for="importFile"
+								>Import</label
+							>
+							<input
+								id="importFile"
+								type="file"
+								accept="application/json"
+								hidden />
+						</div>
+					</div>
+				</details>
+			</header>
+
+			<div
+				id="board"
+				class="board"
+				aria-live="polite"></div>
+			<div
+				class="status"
+				id="status"></div>
+
+			<details
+				class="stats"
+				id="statsPanel">
+				<summary>Stats</summary>
+				<div class="stats-grid">
+					<div class="stat">
+						<div
+							class="num"
+							id="stTotal">
+							0
+						</div>
+						<div class="lbl">Played</div>
+					</div>
+					<div class="stat">
+						<div
+							class="num"
+							id="stWinRate">
+							0%
+						</div>
+						<div class="lbl">Win Rate</div>
+					</div>
+					<div class="stat">
+						<div
+							class="num"
+							id="stCurrent">
+							0
+						</div>
+						<div class="lbl">Current Streak</div>
+					</div>
+					<div class="stat">
+						<div
+							class="num"
+							id="stMax">
+							0
+						</div>
+						<div class="lbl">Max Streak</div>
+					</div>
+					<div class="stat">
+						<div
+							class="num"
+							id="stL5">
+							0%
+						</div>
+						<div class="lbl">5-letter WR</div>
+					</div>
+					<div class="stat">
+						<div
+							class="num"
+							id="stL6">
+							0%
+						</div>
+						<div class="lbl">6-letter WR</div>
+					</div>
+				</div>
+			</details>
+		</div>
+
+		<script>
+			/** === CONFIG === */
+			const WORKER_BASE = "https://YOUR-WORKER-URL"; // set your Worker URL
+			const DAILY_CAP_ENABLED = false; // placeholder
+			const DAILY_CAP_LIMIT = 5; // Not used unless the above is true
+
+			// Attempts per word length & difficulty
+			const ATTEMPTS = {
+				4: { base: 6, hard: 5, expert: 4, impossible: 3 },
+				5: { base: 6, hard: 5, expert: 4, impossible: 3 },
+				6: { base: 7, hard: 6, expert: 5, impossible: 4 },
+				7: { base: 8, hard: 7, expert: 6, impossible: 5 },
+				8: { base: 8, hard: 6, expert: 5, impossible: 4 },
+			};
+
+			/** === State === */
+			let wordLen = 5;
+			let difficulty = "base";
+			let maxRows = ATTEMPTS[wordLen][difficulty];
+			let target = "";
+			let row = 0,
+				col = 0,
+				grid = [],
+				hardMode = false,
+				kbState = {};
+			let WORDS = {}; // loaded lists per length
+			let VALID = {}; // same as WORDS by default
+
+			const board = document.getElementById("board");
+			const status = document.getElementById("status");
+
+			/** === Identity === */
+			const userId = (() => {
+				const k = "wg-user-id";
+				let v = localStorage.getItem(k);
+				if (!v) {
+					v = crypto.getRandomValues(new Uint32Array(4)).join("-");
+					localStorage.setItem(k, v);
+				}
+				return v;
+			})();
+
+			/** === Async loader for word lists (4–8) === */
+			const wordCache = {};
+			async function loadWords(len) {
+				if (wordCache[len]) return wordCache[len];
+				const res = await fetch(`words/words-${len}.json`, { cache: "no-cache" });
+				if (!res.ok) {
+					setStatus(`Couldn't load words-${len}.json. Place it in ./words/`);
+					return [];
+				}
+				if (!res.ok) throw new Error(`Failed to load words-${len}.json`);
+				const arr = await res.json();
+				wordCache[len] = arr.map((w) => String(w).toLowerCase());
+				return wordCache[len];
+			}
+
+			/** === Seen/History (local) === */
+			function loadSeen(len) {
+				try {
+					return JSON.parse(localStorage.getItem(`wg-seen-${len}`)) || { seen: [], max: 500 };
+				} catch {
+					return { seen: [], max: 500 };
+				}
+			}
+			function saveSeen(len, obj) {
+				localStorage.setItem(`wg-seen-${len}`, JSON.stringify(obj));
+			}
+			function clearSeen(len) {
+				const cur = loadSeen(len);
+				saveSeen(len, { seen: [], max: cur.max });
+			}
+			function getSeenCount(len) {
+				return loadSeen(len).seen.length;
+			}
+			function loadHistory() {
+				try {
+					return JSON.parse(localStorage.getItem("wg-history")) || [];
+				} catch {
+					return [];
+				}
+			}
+			function saveHistory(h) {
+				localStorage.setItem("wg-history", JSON.stringify(h));
+			}
+
+			/** === Sync (KV Worker) === */
+			async function serverGet() {
+				const r = await fetch(`${WORKER_BASE}/sync`, { headers: { "X-WordGuess-User": userId } });
+				if (!r.ok) throw new Error("sync GET failed");
+				return r.json();
+			}
+			async function serverPost(payload) {
+				const r = await fetch(`${WORKER_BASE}/sync`, {
+					method: "POST",
+					headers: { "content-type": "application/json", "X-WordGuess-User": userId },
+					body: JSON.stringify(payload),
+				});
+				if (!r.ok) throw new Error("sync POST failed");
+				return r.json();
+			}
+			async function syncPull() {
+				try {
+					const remote = await serverGet();
+					for (const len of [4, 5, 6, 7, 8]) {
+						const local = loadSeen(len);
+						const merged = [...(local.seen || []), ...(remote.seenByLen?.[len] || [])];
+						const uniq = Array.from(new Set(merged)).slice(-500);
+						saveSeen(len, { seen: uniq, max: local.max || 500 });
+					}
+					// history
+					const hist = [...loadHistory(), ...(remote.history || [])].sort((a, b) => (a.ts || 0) - (b.ts || 0));
+					const keys = new Set(),
+						uniq = [];
+					for (const h of hist) {
+						const k = `${h.word}|${h.len}|${h.ts}`;
+						if (!keys.has(k)) {
+							keys.add(k);
+							uniq.push(h);
+						}
+					}
+					saveHistory(uniq.slice(-5000));
+					updateStats(remote.stats || computeStats(uniq));
+					setStatus("Synced.");
+				} catch {
+					setStatus("Sync failed (pull).");
+				}
+			}
+			async function syncPush() {
+				try {
+					const seenByLen = {};
+					for (const len of [4, 5, 6, 7, 8]) seenByLen[len] = loadSeen(len).seen;
+					const server = await serverPost({ seenByLen, history: loadHistory() });
+					updateStats(server.stats || {});
+				} catch {
+					setStatus("Sync failed (push).");
+				}
+			}
+
+			/** === Stats === */
+			function computeStats(history) {
+				if (!history.length) return { total: 0, wins: 0, winRate: 0, currentStreak: 0, maxStreak: 0, perLen: {} };
+				let cur = 0,
+					max = 0,
+					total = history.length,
+					wins = 0;
+				for (const h of history) {
+					if (h.won) {
+						wins++;
+						cur++;
+						max = Math.max(max, cur);
+					} else cur = 0;
+				}
+				const perLen = {};
+				for (const len of [4, 5, 6, 7, 8]) {
+					const items = history.filter((h) => h.len === len);
+					const w = items.filter((h) => h.won).length;
+					perLen[len] = { total: items.length, wins: w, winRate: items.length ? Math.round((100 * w) / items.length) : 0 };
+				}
+				return { total, wins, winRate: Math.round((100 * wins) / total), currentStreak: cur, maxStreak: max, perLen };
+			}
+			function updateStats(stats) {
+				const hist = loadHistory();
+				const s = stats && stats.total !== undefined ? stats : computeStats(hist);
+				document.getElementById("stTotal").textContent = s.total || 0;
+				document.getElementById("stWinRate").textContent = (s.winRate || 0) + "%";
+				document.getElementById("stCurrent").textContent = s.currentStreak || 0;
+				document.getElementById("stMax").textContent = s.maxStreak || 0;
+				document.getElementById("stL5").textContent = (s.perLen?.[5]?.winRate || 0) + "%";
+				document.getElementById("stL6").textContent = (s.perLen?.[6]?.winRate || 0) + "%";
+			}
+
+			/** === Daily cap placeholder === */
+			function checkDailyCap() {
+				if (!DAILY_CAP_ENABLED) return true;
+				const k = "wg-dcap",
+					today = new Date().toISOString().slice(0, 10);
+				const raw = JSON.parse(localStorage.getItem(k) || "{}");
+				if (raw.day !== today) {
+					raw.day = today;
+					raw.count = 0;
+				}
+				if (raw.count >= DAILY_CAP_LIMIT) {
+					setStatus(`Daily cap reached (${DAILY_CAP_LIMIT}).`);
+					return false;
+				}
+				raw.count++;
+				localStorage.setItem(k, JSON.stringify(raw));
+				return true;
+			}
+
+			/** === Responsive layout === */
+			function updateLayout() {
+				const wrap = document.querySelector(".wrap");
+				const header = document.querySelector("header");
+				const rows = maxRows,
+					cols = wordLen,
+					gap = 8;
+				const vw = innerWidth,
+					vh = innerHeight,
+					wrapRect = wrap.getBoundingClientRect();
+				const headerH = header?.getBoundingClientRect().height || 0;
+				const diffH = [...document.querySelectorAll(".controls")].slice(1, 3).reduce((h, el) => h + (el?.getBoundingClientRect().height || 0), 0);
+				const statsPanel = document.getElementById("statsPanel");
+				const statsH = (statsPanel?.open ? statsPanel.getBoundingClientRect().height : 40) || 0;
+				const verticalChrome = headerH + diffH + statsH + 80;
+				const availH = Math.max(180, vh - verticalChrome);
+				const availW = Math.max(220, wrapRect.width - 16);
+				const totalGapW = (cols - 1) * gap,
+					totalGapH = (rows - 1) * gap;
+				const maxTileW = Math.floor((availW - totalGapW) / cols);
+				const maxTileH = Math.floor((availH - totalGapH) / rows);
+				const tile = Math.max(36, Math.min(96, Math.min(maxTileW, maxTileH)));
+				document.documentElement.style.setProperty("--tile", tile + "px");
+				const keyW = Math.max(28, Math.min(52, Math.floor(tile * 0.65)));
+				document.documentElement.style.setProperty("--key-w", keyW + "px");
+			}
+
+			/** === Board & Input === */
+			function buildBoard() {
+				board.innerHTML = "";
+				board.style.gridTemplateRows = `repeat(${maxRows}, var(--tile))`;
+				for (let r = 0; r < maxRows; r++) {
+					const rowEl = document.createElement("div");
+					rowEl.className = "row";
+					rowEl.style.gridTemplateColumns = `repeat(${wordLen}, var(--tile))`;
+					for (let c = 0; c < wordLen; c++) {
+						const t = document.createElement("div");
+						t.className = "tile";
+						t.dataset.r = r;
+						t.dataset.c = c;
+						rowEl.appendChild(t);
+					}
+					board.appendChild(rowEl);
+				}
+				grid = Array.from({ length: maxRows }, () => Array(wordLen).fill(""));
+				row = 0;
+				col = 0;
+				kbState = {};
+				renderKeyboardHints();
+				updateLayout();
+			}
+			function buildKeyboard() {
+				const kb =
+					document.getElementById("keyboard") ||
+					(() => {
+						const d = document.createElement("div");
+						d.id = "keyboard";
+						d.className = "keyboard";
+						board.after(d);
+						return d;
+					})();
+				const rows = ["QWERTYUIOP", "ASDFGHJKL", "↵ZXCVBNM⌫"];
+				kb.innerHTML = "";
+				rows.forEach((r) => {
+					const div = document.createElement("div");
+					div.className = "kb-row";
+					[...r].forEach((ch) => {
+						const b = document.createElement("button");
+						b.className = "key";
+						b.textContent = ch === "↵" ? "Enter" : ch === "⌫" ? "Back" : ch;
+						b.dataset.key = ch;
+						b.onclick = () => onPress(ch);
+						div.appendChild(b);
+					});
+					kb.appendChild(div);
+				});
+			}
+			addEventListener("keydown", (e) => {
+				if (e.key === "Enter") return onPress("↵");
+				if (e.key === "Backspace") return onPress("⌫");
+				const k = e.key.toUpperCase();
+				if (/^[A-Z]$/.test(k)) onPress(k);
+			});
+			function onPress(k) {
+				if (row >= maxRows) return;
+				if (k === "⌫") {
+					if (col > 0) {
+						col--;
+						setCell(row, col, "");
+					}
+					return;
+				}
+				if (k === "↵") {
+					handleEnter();
+					return;
+				}
+				if (/^[A-Z]$/.test(k) && col < wordLen) {
+					setCell(row, col, k);
+					col++;
+				}
+			}
+			function setCell(r, c, letter) {
+				grid[r][c] = (letter || "").toUpperCase();
+				const t = getTile(r, c);
+				t.textContent = grid[r][c];
+				t.classList.toggle("filled", !!letter);
+			}
+			function getTile(r, c) {
+				return board.children[r].children[c];
+			}
+			function wiggleRow(r) {
+				const re = board.children[r];
+				re.style.transform = "translateX(4px)";
+				setTimeout(() => (re.style.transform = ""), 100);
+			}
+			function renderKeyboardHints() {
+				document.querySelectorAll(".key").forEach((k) => {
+					const ch = k.dataset.key;
+					if (!/^[A-Z]$/.test(ch)) return;
+					k.classList.remove("ok", "maybe", "no");
+					const st = kbState[ch];
+					if (st) k.classList.add(st);
+				});
+			}
+
+			/** === Game logic === */
+			function isValid(word) {
+				const list = VALID[word.length] || [];
+				return list?.includes(word.toLowerCase());
+			}
+			function score(guess, answer) {
+				const g = [...guess],
+					a = [...answer],
+					res = Array(wordLen).fill("no"),
+					used = Array(wordLen).fill(false);
+				for (let i = 0; i < wordLen; i++) {
+					if (g[i] === a[i]) {
+						res[i] = "ok";
+						used[i] = true;
+					}
+				}
+				for (let i = 0; i < wordLen; i++) {
+					if (res[i] === "ok") continue;
+					const idx = a.findIndex((ch, j) => !used[j] && ch === g[i]);
+					if (idx > -1) {
+						res[i] = "maybe";
+						used[idx] = true;
+					}
+				}
+				return res;
+			}
+			function updateKeyboard(guess, res) {
+				for (let i = 0; i < guess.length; i++) {
+					const ch = guess[i],
+						st = res[i],
+						prev = kbState[ch];
+					if (!prev || (prev === "maybe" && st === "ok") || (prev === "no" && (st === "ok" || st === "maybe"))) kbState[ch] = st;
+				}
+				renderKeyboardHints();
+			}
+			function respectsHardMode(guess) {
+				if (!hardMode || row === 0) return true;
+				const prevGuess = grid[row - 1].join("");
+				const prevRes = score(prevGuess, target);
+				for (let i = 0; i < wordLen; i++) {
+					if (prevRes[i] === "ok" && guess[i] !== prevGuess[i]) {
+						setStatus(`Strict: keep ${prevGuess[i]} at ${i + 1}.`);
+						return false;
+					}
+				}
+				const needed = {};
+				for (let i = 0; i < wordLen; i++) {
+					if (prevRes[i] === "maybe") {
+						needed[prevGuess[i]] = (needed[prevGuess[i]] || 0) + 1;
+					}
+				}
+				for (const ch of guess) {
+					if (needed[ch]) needed[ch]--;
+				}
+				for (const k in needed) {
+					if (needed[k] > 0) {
+						setStatus(`Strict: include ${k}.`);
+						return false;
+					}
+				}
+				return true;
+			}
+			function handleEnter() {
+				if (col < wordLen) {
+					wiggleRow(row);
+					return setStatus("Not enough letters.");
+				}
+				const guess = grid[row].join("");
+				if (!isValid(guess)) {
+					wiggleRow(row);
+					return setStatus("Not in word list.");
+				}
+				if (hardMode && !respectsHardMode(guess)) {
+					wiggleRow(row);
+					return;
+				}
+				const res = score(guess, target);
+				paintRow(row, res);
+				updateKeyboard(guess, res);
+				if (guess === target) {
+					setStatus(`Nice! You got it in ${row + 1}/${maxRows}.`);
+					markCompleted(wordLen, target, true, row + 1);
+					row = maxRows;
+					return;
+				}
+				row++;
+				col = 0;
+				if (row === maxRows) {
+					setStatus(`Answer was ${target.toUpperCase()}.`);
+					markCompleted(wordLen, target, false, maxRows);
+				} else setStatus("");
+			}
+			function paintRow(r, res) {
+				for (let c = 0; c < wordLen; c++) {
+					const t = getTile(r, c);
+					t.classList.remove("filled");
+					t.classList.add(res[c]);
+					t.style.transform = "scale(1.05)";
+					setTimeout(() => (t.style.transform = "scale(1)"), 90);
+				}
+			}
+
+			/** === Word selection with no repeats === */
+			async function pickTarget(len) {
+				const list = await loadWords(len);
+				WORDS[len] = list;
+				VALID[len] = list;
+				const seen = new Set(loadSeen(len).seen);
+				const candidates = list.filter((w) => !seen.has(w));
+				if (!candidates.length) {
+					clearSeen(len);
+					return list[(Math.random() * list.length) | 0];
+				}
+				return candidates[(Math.random() * candidates.length) | 0];
+			}
+			function restoreCurrent() {
+				const s = localStorage.getItem(`wg-current-${wordLen}`);
+				const list = wordCache[wordLen];
+				return s && list?.includes(s) ? s : "";
+			}
+
+			/** === Round completion === */
+			function markCompleted(len, word, won, guesses) {
+				const data = loadSeen(len);
+				if (!data.seen.includes(word)) data.seen.push(word);
+				if (data.seen.length > data.max) data.seen.splice(0, data.seen.length - data.max);
+				saveSeen(len, data);
+				const hist = loadHistory();
+				hist.push({ word, len, won, guesses, ts: Date.now() });
+				if (hist.length > 5000) hist.splice(0, hist.length - 5000);
+				saveHistory(hist);
+				updateStats();
+				syncPush();
+				setTimeout(() => resetGame(len), 600);
+			}
+
+			/** === Controls === */
+			document.querySelectorAll(".diffL").forEach((b) => {
+				b.addEventListener("click", async () => {
+					document.querySelectorAll(".diffL").forEach((x) => x.setAttribute("aria-pressed", "false"));
+					b.setAttribute("aria-pressed", "true");
+					await resetGame(+b.dataset.len);
+				});
+			});
+			document.querySelectorAll(".diffA").forEach((b) => {
+				b.addEventListener("click", async () => {
+					document.querySelectorAll(".diffA").forEach((x) => x.setAttribute("aria-pressed", "false"));
+					b.setAttribute("aria-pressed", "true");
+					difficulty = b.dataset.diff;
+					await resetGame(wordLen);
+				});
+			});
+			document.getElementById("hard").addEventListener("click", (e) => {
+				hardMode = !hardMode;
+				e.currentTarget.setAttribute("aria-checked", String(hardMode));
+				e.currentTarget.textContent = `Strict: ${hardMode ? "On" : "Off"}`;
+				e.currentTarget.style.outline = hardMode ? "2px solid var(--accent)" : "none";
+				setStatus(hardMode ? "Strict mode enabled." : "Strict mode disabled.");
+			});
+			document.getElementById("new").onclick = () => resetGame(wordLen);
+			document.getElementById("reveal").onclick = () => setStatus(`Answer: ${target.toUpperCase()}`);
+			document.getElementById("copy").onclick = () => {
+				const emoji = renderShare();
+				navigator.clipboard.writeText(emoji).then(() => setStatus("Result copied to clipboard."));
+			};
+			document.getElementById("history").onclick = () => {
+				const total = loadHistory().length;
+				const per = [4, 5, 6, 7, 8].map((n) => `${n}L:${getSeenCount(n)}`).join(" • ");
+				setStatus(`Played: ${total}. Seen — ${per}.`);
+			};
+			document.getElementById("resetSeen").onclick = () => {
+				clearSeen(wordLen);
+				setStatus(`Cleared seen for ${wordLen}-letter.`);
+			};
+			document.getElementById("exportBtn").onclick = async () => {
+				try {
+					const r = await fetch(`${WORKER_BASE}/export`, { headers: { "X-WordGuess-User": userId } });
+					const blob = await r.blob();
+					const a = document.createElement("a");
+					a.href = URL.createObjectURL(blob);
+					a.download = `wordguess-${userId}.json`;
+					a.click();
+					URL.revokeObjectURL(a.href);
+					setStatus("Exported.");
+				} catch {
+					setStatus("Export failed.");
+				}
+			};
+			document.getElementById("importFile").onchange = async (e) => {
+				const f = e.target.files?.[0];
+				if (!f) return;
+				try {
+					const data = JSON.parse(await f.text());
+					if (data?.seenByLen)
+						for (const len of [4, 5, 6, 7, 8]) {
+							const local = loadSeen(len);
+							const merged = Array.from(new Set([...(local.seen || []), ...(data.seenByLen[len] || [])]));
+							saveSeen(len, { seen: merged.slice(-500), max: local.max || 500 });
+						}
+					if (data?.history?.length) {
+						const combo = [...loadHistory(), ...data.history].sort((a, b) => a.ts - b.ts);
+						const uniq = [],
+							keys = new Set();
+						for (const h of combo) {
+							const k = `${h.word}|${h.len}|${h.ts}`;
+							if (!keys.has(k)) {
+								keys.add(k);
+								uniq.push(h);
+							}
+						}
+						saveHistory(uniq.slice(-5000));
+					}
+					await syncPush();
+					setStatus("Imported & synced.");
+				} catch {
+					setStatus("Import failed.");
+				}
+			};
+
+			/** === Share === */
+			function renderShare() {
+				let lines = [];
+				for (let r = 0; r < row; r++) {
+					const guess = grid[r].join("");
+					const res = score(guess, target);
+					lines.push(res.map((v) => (v === "ok" ? "🟩" : v === "maybe" ? "🟨" : "⬛")).join(""));
+				}
+				const fail = row === maxRows && grid[row - 1]?.join("") !== target;
+				const header = `WordGuess ${wordLen}/${maxRows} ${fail ? "X" : row} • ${wordLen}-letter`;
+				return `${header}\n` + lines.join("\n");
+			}
+
+			/** === Status === */
+			function setStatus(msg) {
+				status.textContent = msg || "";
+			}
+
+			/** === Init / Reset === */
+			async function resetGame(len = wordLen) {
+				if (!checkDailyCap()) return;
+				wordLen = len;
+				maxRows = ATTEMPTS[wordLen][difficulty];
+				target = await pickTarget(wordLen);
+				buildBoard();
+				buildKeyboard();
+				setStatus(`New ${wordLen}-letter word • Attempts: ${maxRows}. Go!`);
+				localStorage.setItem(`wg-current-${wordLen}`, target);
+				updateLayout();
+			}
+			async function init() {
+				try {
+					maxRows = ATTEMPTS[wordLen][difficulty];
+					const ok = await loadWords(wordLen); // returns [] on failure
+					if (!ok.length) throw new Error("No word list loaded");
+
+					target = restoreCurrent() || (await pickTarget(wordLen));
+					buildBoard();
+					buildKeyboard();
+					localStorage.setItem(`wg-current-${wordLen}`, target);
+					setStatus(`Guess the ${wordLen}-letter word • Attempts: ${maxRows}. Good luck!`);
+					updateStats();
+					// only try to sync if you’ve actually deployed the Worker
+					if (WORKER_BASE && WORKER_BASE.startsWith("http")) syncPull();
+					addEventListener("resize", updateLayout);
+					document.getElementById("statsPanel")?.addEventListener("toggle", updateLayout);
+				} catch (e) {
+					console.error(e);
+					setStatus("Init failed. Check that ./words/words-4..8.json exist.");
+				}
+			}
+			init();
+		</script>
+	</body>
+</html>
