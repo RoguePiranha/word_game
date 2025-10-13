@@ -193,6 +193,7 @@ details.stats summary {
 .settings > summary {
 	list-style: none;
 	cursor: pointer;
+	-webkit-user-select: none;
 	user-select: none;
 	border: 1px solid #2a2d3a;
 	background: var(--panel);
