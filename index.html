@@ -6,13 +6,28 @@
 			name="viewport"
 			content="width=device-width,initial-scale=1" />
 		<title>Word Guess</title>
-		<meta name="description" content="A word guessing game with multiple difficulty levels" />
-		<meta name="theme-color" content="#1a1a1a" />
-		<meta name="apple-mobile-web-app-capable" content="yes" />
-		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-		<meta name="apple-mobile-web-app-title" content="Word Guess" />
-		<link rel="apple-touch-icon" sizes="192x192" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' fill='%23333'/><text x='96' y='120' font-family='Arial,sans-serif' font-size='60' fill='white' text-anchor='middle'>W</text></svg>" />
-		<link rel="manifest" href="manifest.json" />
+		<meta
+			name="description"
+			content="A word guessing game with multiple difficulty levels" />
+		<meta
+			name="theme-color"
+			content="#1a1a1a" />
+		<meta
+			name="apple-mobile-web-app-capable"
+			content="yes" />
+		<meta
+			name="apple-mobile-web-app-status-bar-style"
+			content="black-translucent" />
+		<meta
+			name="apple-mobile-web-app-title"
+			content="Word Guess" />
+		<link
+			rel="apple-touch-icon"
+			sizes="192x192"
+			href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' fill='%23333'/><text x='96' y='120' font-family='Arial,sans-serif' font-size='60' fill='white' text-anchor='middle'>W</text></svg>" />
+		<link
+			rel="manifest"
+			href="manifest.json" />
 		<link
 			rel="stylesheet"
 			href="style.css" />
@@ -255,62 +270,62 @@
 				<div
 					class="status"
 					id="status"></div>
-				<details
-					class="stats"
-					id="statsPanel">
-					<summary>Stats</summary>
-					<div class="stats-grid">
-						<div class="stat">
-							<div
-								class="num"
-								id="stTotal">
-								0
-							</div>
-							<div class="lbl">Played</div>
-						</div>
-						<div class="stat">
-							<div
-								class="num"
-								id="stWinRate">
-								0%
-							</div>
-							<div class="lbl">Win Rate</div>
-						</div>
-						<div class="stat">
-							<div
-								class="num"
-								id="stCurrent">
-								0
-							</div>
-							<div class="lbl">Current Streak</div>
-						</div>
-						<div class="stat">
-							<div
-								class="num"
-								id="stMax">
-								0
-							</div>
-							<div class="lbl">Max Streak</div>
-						</div>
-						<div class="stat">
-							<div
-								class="num"
-								id="stL5">
-								0%
-							</div>
-							<div class="lbl">5-letter WR</div>
-						</div>
-						<div class="stat">
-							<div
-								class="num"
-								id="stL6">
-								0%
-							</div>
-							<div class="lbl">6-letter WR</div>
-						</div>
-					</div>
-				</details>
 			</main>
+			<details
+				class="stats"
+				id="statsPanel">
+				<summary>Stats</summary>
+				<div class="stats-grid">
+					<div class="stat">
+						<div
+							class="num"
+							id="stTotal">
+							0
+						</div>
+						<div class="lbl">Played</div>
+					</div>
+					<div class="stat">
+						<div
+							class="num"
+							id="stWinRate">
+							0%
+						</div>
+						<div class="lbl">Win Rate</div>
+					</div>
+					<div class="stat">
+						<div
+							class="num"
+							id="stCurrent">
+							0
+						</div>
+						<div class="lbl">Current Streak</div>
+					</div>
+					<div class="stat">
+						<div
+							class="num"
+							id="stMax">
+							0
+						</div>
+						<div class="lbl">Max Streak</div>
+					</div>
+					<div class="stat">
+						<div
+							class="num"
+							id="stL5">
+							0%
+						</div>
+						<div class="lbl">5-letter WR</div>
+					</div>
+					<div class="stat">
+						<div
+							class="num"
+							id="stL6">
+							0%
+						</div>
+						<div class="lbl">6-letter WR</div>
+					</div>
+				</div>
+			</details>
 		</div>
 
 		<script>
@@ -1030,18 +1045,18 @@
 					setStatus("To install: tap Share → Add to Home Screen");
 					return;
 				}
-				
+
 				// Show the install prompt
 				deferredPrompt.prompt();
 				// Wait for the user to respond to the prompt
 				const { outcome } = await deferredPrompt.userChoice;
-				
+
 				if (outcome === "accepted") {
 					setStatus("App installed! 📱");
 				} else {
 					setStatus("Installation cancelled.");
 				}
-				
+
 				// Clear the saved prompt since it can't be used again
 				deferredPrompt = null;
 				installBtn.classList.add("btn-hidden");

@@ -9,7 +9,6 @@
 	--accent: #5b8cff;
 	--backkey: #a0453e;
 	--gap: 8px;
-	/* Set tile size to percent based on number of row items */
 	--tile: 100%;
 }
 * {
@@ -47,10 +46,10 @@ header {
 	margin: 0;
 }
 .main {
-	flex: 1; /* take remaining height */
+	flex: 1;
 	display: flex;
 	flex-direction: column;
-	justify-content: center; /* vertical center */
+	justify-content: center;
 }
 .controls {
 	display: flex;
@@ -90,7 +89,7 @@ header {
 	display: grid;
 	place-items: center;
 	font-weight: 800;
-	font-size: clamp(18px, calc(var(--tile) * 1.0), 36px);
+	font-size: clamp(18px, calc(var(--tile) * 1), 36px);
 	text-transform: uppercase;
 	background: #121420;
 	transition: transform 0.08s, background 0.15s, border-color 0.15s;
@@ -273,7 +272,7 @@ details.stats summary {
 	right: 0;
 	top: calc(100% + 8px);
 	z-index: 1000;
-	width: min(92vw, 680px);
+	width: min(calc(100vw - 40px), 620px);
 	background: #121420;
 	border: 1px solid #2a2d3a;
 	border-radius: 12px;
@@ -286,24 +285,84 @@ details.stats summary {
 /* small screens: stretch edge-to-edge */
 @media (max-width: 520px) {
 	.settings-panel {
-		left: 0;
-		right: 0;
-		width: auto;
-		max-width: none;
+		position: fixed !important;
+		left: 50% !important;
+		transform: translateX(-50%) !important;
+		width: min(calc(100vw - 40px), 680px) !important;
+		max-width: none !important;
+		padding: 8px;
+		justify-self: unset !important;
 	}
-	.controls {
-		flex-direction: column;
-		align-items: stretch;
-		gap: 8px;
-	}
-	.controls .btn {
-		width: 100%;
+	.settings-panel .controls .config {
+		width: 100% !important;
 		text-align: center;
+		margin-bottom: 6px;
+		font-size: 14px;
+		font-weight: 600;
+		order: -1;
+		grid-column: 1 / -1;
+	}
+	/* Word length and difficulty groups inside settings panel */
+	.settings-panel .controls[role="group"] {
+		display: grid !important;
+		grid-template-columns: repeat(3, 1fr) !important;
+		gap: 4px !important;
+		flex-wrap: nowrap;
+		width: 100%;
+		align-items: stretch;
+	}
+	.settings-panel .controls[role="group"] .btn {
+		padding: 8px 4px;
+		font-size: 12px;
+		text-align: center;
+		min-width: 0;
+	}
+	/* Difficulty has 4 items, so 2x2 grid works better */
+	.settings-panel .controls[aria-label="Attempts Difficulty"] {
+		grid-template-columns: repeat(2, 1fr) !important;
+	}
+	/* Action buttons group - single column */
+	.settings-panel .controls:not([role="group"]) {
+		display: grid !important;
+		grid-template-columns: 1fr !important;
+		gap: 6px !important;
+		flex-wrap: nowrap;
+		width: 100%;
+	}
+	.settings-panel .controls:not([role="group"]) .btn {
+		padding: 10px;
+		font-size: 14px;
+		text-align: center;
+		width: 100%;
+	}
+
+	/* Override any flexbox behavior completely */
+	.settings-panel .controls {
+		flex-direction: unset !important;
+		align-items: unset !important;
+		flex-wrap: unset !important;
 	}
 }
 @media (max-width: 420px) {
 	.stats-grid {
 		grid-template-columns: repeat(2, 1fr);
+	}
+	.settings-panel {
+		padding: 6px;
+	}
+	.settings-panel .controls .btn {
+		padding: 6px 4px;
+		font-size: 11px;
+	}
+	.settings-panel .controls .config {
+		font-size: 13px;
+	}
+}
+
+@media (max-width: 360px) {
+	.settings-panel .controls .btn {
+		padding: 4px 2px;
+		font-size: 10px;
 	}
 }
 /* Mobile board and layout improvements */
