@@ -814,10 +814,10 @@
 				const tries = `${guesses}/${ATTEMPTS[len][difficulty]}`;
 				if (won) {
 					title.textContent = "Congratulations! You got it!";
-					sub.textContent = `Solved ${len}-letter in ${guesses}. Answer: ${word.toUpperCase()} • Mode: ${difficulty}, Strict: ${hardMode ? "On" : "Off"}`;
+					sub.textContent = `Answer: ${word.toUpperCase()}\nSolved ${len}-letter in ${row + 1} guesses.\nMode: ${difficulty}, Strict: ${hardMode ? "On" : "Off"}`;
 				} else {
 					title.textContent = "So close!";
-					sub.textContent = `Out of tries (${ATTEMPTS[len][difficulty]}). Answer was ${word.toUpperCase()}. • Mode: ${difficulty}, Strict: ${hardMode ? "On" : "Off"}`;
+					sub.textContent = `Answer was ${word.toUpperCase()}.\nOut of tries (${ATTEMPTS[len][difficulty]}).\nMode: ${difficulty}, Strict: ${hardMode ? "On" : "Off"}`;
 				}
 
 				const modal = document.getElementById("winModal");
