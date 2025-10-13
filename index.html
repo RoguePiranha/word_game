@@ -720,12 +720,11 @@
 				const res = score(guess, target);
 				paintRow(row, res);
 				updateKeyboard(guess, res);
-				if (guess === target) {
+				if (guess.toLowerCase() === target.toLowerCase()) {
 					setStatus(`Nice! You got it in ${row + 1}/${maxRows}.`);
 					setTimeout(() => {
 						markCompleted(wordLen, target, true, row + 1, /*showModal=*/ true);
 					}, 200);
-					markCompleted(wordLen, target, true, row + 1, /*showModal=*/ true); // ⬅️ pass flag
 					row = maxRows;
 					return;
 				}
