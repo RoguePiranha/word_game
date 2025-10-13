@@ -723,8 +723,9 @@
 				if (guess === target) {
 					setStatus(`Nice! You got it in ${row + 1}/${maxRows}.`);
 					setTimeout(() => {
-						markCompleted(wordLen, target, true, row + 1, showModal= true);
+						markCompleted(wordLen, target, true, row + 1, /*showModal=*/ true);
 					}, 200);
+					markCompleted(wordLen, target, true, row + 1, /*showModal=*/ true); // ⬅️ pass flag
 					row = maxRows;
 					return;
 				}
@@ -733,7 +734,7 @@
 				if (row === maxRows) {
 					setStatus(`Answer was ${target.toUpperCase()}.`);
 					// Let markCompleted open a modal for loss too
-					markCompleted(wordLen, target,won= false, maxRows, showModal= true);
+					markCompleted(wordLen, target, /*won=*/ false, maxRows, /*showModal=*/ true);
 				} else {
 					setStatus("");
 				}
@@ -803,7 +804,7 @@
 
 				const tries = `${guesses}/${ATTEMPTS[len][difficulty]}`;
 				if (won) {
-					title.textContent = "🎉 Congratulations! You got it!";
+					title.textContent = "Congratulations! You got it!";
 					sub.textContent = `Solved ${len}-letter in ${tries}. Answer: ${word.toUpperCase()} • Mode: ${difficulty}, Strict: ${hardMode ? "On" : "Off"}`;
 				} else {
 					title.textContent = "So close!";
@@ -828,31 +829,6 @@
 				document.body.style.overflow = "";
 				stopFireworks();
 			}
-
-			// Wire modal buttons once on load
-			document.addEventListener("DOMContentLoaded", () => {
-				const modal = document.getElementById("winModal");
-				modal?.addEventListener("click", (e) => {
-					if (e.target.matches("[data-close]")) closeWinModal();
-				});
-
-				document.getElementById("closeModalBtn")?.addEventListener("click", closeWinModal);
-				document.getElementById("playAgainBtn")?.addEventListener("click", () => {
-					closeWinModal();
-					resetGame(wordLen);
-				});
-				document.getElementById("modalSettingsBtn")?.addEventListener("click", () => {
-					closeWinModal();
-					// open the <details id="settings">
-					document.getElementById("settings")?.setAttribute("open", "");
-					// scroll to top for visibility on mobile
-					window.scrollTo({ top: 0, behavior: "smooth" });
-				});
-				document.getElementById("modalShareBtn")?.addEventListener("click", () => {
-					const emoji = renderShare();
-					navigator.clipboard.writeText(emoji).then(() => setStatus("Result copied to clipboard."));
-				});
-			});
 
 			// Simple confetti / fireworks
 			let fxRAF = null,
@@ -1027,6 +1003,30 @@
 			function setStatus(msg) {
 				status.textContent = msg || "";
 			}
+
+			/** === Modal Helper === */
+			function wireModalHandlers() {
+				const modal = document.getElementById("winModal");
+				modal?.addEventListener("click", (e) => {
+					if (e.target.matches("[data-close]")) closeWinModal();
+				});
+
+				document.getElementById("closeModalBtn")?.addEventListener("click", closeWinModal);
+				document.getElementById("playAgainBtn")?.addEventListener("click", () => {
+					closeWinModal();
+					resetGame(wordLen);
+				});
+				document.getElementById("modalSettingsBtn")?.addEventListener("click", () => {
+					closeWinModal();
+					document.getElementById("settings")?.setAttribute("open", "");
+					window.scrollTo({ top: 0, behavior: "smooth" });
+				});
+				document.getElementById("modalShareBtn")?.addEventListener("click", () => {
+					const emoji = renderShare();
+					navigator.clipboard.writeText(emoji).then(() => setStatus("Result copied to clipboard."));
+				});
+			}
+			wireModalHandlers();
 
 			/** === Init / Reset === */
 			async function resetGame(len = wordLen) {

@@ -108,7 +108,9 @@ header {
 	color: #cbd0e6;
 }
 /* Keyboard */
-.keyboard{ margin-top:auto }
+.keyboard {
+	margin-top: auto;
+}
 .kb-row {
 	display: flex;
 	gap: 6px;
@@ -143,14 +145,38 @@ header {
 	color: #061106;
 }
 /* Tiles — high-contrast and override earlier rules */
-.board .tile.ok    { background: var(--ok);    border-color: var(--ok);    color:#061106 !important; }
-.board .tile.maybe { background: var(--maybe); border-color:#b78f1d;       color:#1a1300 !important; }
-.board .tile.no    { background:#0f111a;       border-color:#2b3144;       color:#9aa3c7 !important; }
+.board .tile.ok {
+	background: var(--ok);
+	border-color: var(--ok);
+	color: #061106 !important;
+}
+.board .tile.maybe {
+	background: var(--maybe);
+	border-color: #b78f1d;
+	color: #1a1300 !important;
+}
+.board .tile.no {
+	background: #0f111a;
+	border-color: #2b3144;
+	color: #9aa3c7 !important;
+}
 
 /* Keys — match the tile colors */
-.keyboard .key.ok    { background: var(--ok);    border-color:#38b24e; color:#061106 !important; }
-.keyboard .key.maybe { background: var(--maybe); border-color:#b78f1d; color:#1a1300 !important; }
-.keyboard .key.no    { background:#0f111a;       border-color:#2b3144; color:#9aa3c7 !important; }
+.keyboard .key.ok {
+	background: var(--ok);
+	border-color: #38b24e;
+	color: #061106 !important;
+}
+.keyboard .key.maybe {
+	background: var(--maybe);
+	border-color: #b78f1d;
+	color: #1a1300 !important;
+}
+.keyboard .key.no {
+	background: #0f111a;
+	border-color: #2b3144;
+	color: #9aa3c7 !important;
+}
 
 .status {
 	min-height: 24px;
@@ -255,42 +281,80 @@ details.stats summary {
 }
 
 /* Modal */
-.modal[hidden] { display: none }
+.modal[hidden] {
+	display: none;
+}
 .modal {
-  position: fixed; inset: 0; z-index: 2000;
-  display: grid; place-items: center;
+	position: fixed;
+	inset: 0;
+	z-index: 2000;
+	display: grid;
+	place-items: center;
 }
 .modal__backdrop {
-  position: absolute; inset: 0;
-  background: rgba(0,0,0,.55);
-  -webkit-backdrop-filter: blur(2px);
-  backdrop-filter: blur(2px);
+	position: absolute;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.55);
+	-webkit-backdrop-filter: blur(2px);
+	backdrop-filter: blur(2px);
 }
 .modal__panel {
-  position: relative;
-  width: min(560px, 94vw);
-  background: #141625;
-  border: 1px solid #2a2d3a;
-  border-radius: 14px;
-  padding: 18px;
-  box-shadow: 0 20px 60px rgba(0,0,0,.6);
+	position: relative;
+	width: min(560px, 94vw);
+	background: #141625;
+	border: 1px solid #2a2d3a;
+	border-radius: 14px;
+	padding: 18px;
+	box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
 }
-.modal__title { margin: 0 0 4px; text-align: center }
-.modal__subtitle { margin: 0 0 12px; text-align: center; color: var(--muted) }
+.modal__title {
+	margin: 0 0 4px;
+	text-align: center;
+}
+.modal__subtitle {
+	margin: 0 0 12px;
+	text-align: center;
+	color: var(--muted);
+}
 .modal__stats {
-  display: grid; grid-template-columns: repeat(4, 1fr);
-  gap: 10px; margin: 12px 0 16px;
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: 10px;
+	margin: 12px 0 16px;
 }
-.modal__actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap }
-.btn-primary { background: var(--accent); border-color: var(--accent); color: #0b0f1b }
+.modal__actions {
+	display: flex;
+	gap: 8px;
+	justify-content: center;
+	flex-wrap: wrap;
+}
+.btn-primary {
+	background: var(--accent);
+	border-color: var(--accent);
+	color: #0b0f1b;
+}
 
 /* Reuse existing .stat styles */
-.modal .stat { background:#171923; border:1px solid #2a2d3a; border-radius:12px; padding:10px; text-align:center }
-.modal .stat .num { font-size:22px; font-weight:800 }
-.modal .stat .lbl { font-size:12px; color:#a3a7b7 }
+.modal .stat {
+	background: #171923;
+	border: 1px solid #2a2d3a;
+	border-radius: 12px;
+	padding: 10px;
+	text-align: center;
+}
+.modal .stat .num {
+	font-size: 22px;
+	font-weight: 800;
+}
+.modal .stat .lbl {
+	font-size: 12px;
+	color: #a3a7b7;
+}
 
 /* Fireworks canvas */
 .fx {
-  position: fixed; inset: 0; z-index: 1500;
-  pointer-events: none;
+	position: fixed;
+	inset: 0;
+	z-index: 1500;
+	pointer-events: none;
 }
