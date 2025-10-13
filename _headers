@@ -1,0 +1,3 @@
+/words/*
+  Cache-Control: public, max-age=604800, immutable
+  Access-Control-Allow-Origin: *
