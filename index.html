@@ -731,9 +731,10 @@
 				paintRow(row, res);
 				updateKeyboard(guess, res);
 				if (guess.toLowerCase() === target.toLowerCase()) {
-					setStatus(`Nice! You got it in ${row + 1}/${maxRows}.`);
+					const currentrow = row + 1;
+					setStatus(`Nice! You got it in ${currentrow}/${maxRows}.`);
 					setTimeout(() => {
-						markCompleted(wordLen, target, true, row + 1, /*showModal=*/ true);
+						markCompleted(wordLen, target, true, currentrow, /*showModal=*/ true);
 					}, 200);
 					row = maxRows;
 					return;
@@ -812,9 +813,10 @@
 				document.getElementById("mMax").textContent = s.maxStreak || 0;
 
 				const tries = `${guesses}/${ATTEMPTS[len][difficulty]}`;
+
 				if (won) {
 					title.textContent = "Congratulations! You got it!";
-					sub.textContent = `Answer: ${word.toUpperCase()}\nSolved ${len}-letter in ${row + 1} guesses.\nMode: ${difficulty}, Strict: ${hardMode ? "On" : "Off"}`;
+					sub.textContent = `Answer: ${word.toUpperCase()}\nSolved ${len}-letter in /${ATTEMPTS[len][difficulty]} guesses.\nMode: ${difficulty}, Strict: ${hardMode ? "On" : "Off"}`;
 				} else {
 					title.textContent = "So close!";
 					sub.textContent = `Answer was ${word.toUpperCase()}.\nOut of tries (${ATTEMPTS[len][difficulty]}).\nMode: ${difficulty}, Strict: ${hardMode ? "On" : "Off"}`;
@@ -1054,8 +1056,8 @@
 					maxRows = ATTEMPTS[wordLen][difficulty];
 					const list = await loadWords(wordLen);
 					if (!list.length) throw new Error("No word list loaded");
-					WORDS[wordLen] = list; // ⬅️ ensure populated
-					VALID[wordLen] = list; // ⬅️ ensure populated
+					WORDS[wordLen] = list; // ensure populated
+					VALID[wordLen] = list; // ensure populated
 
 					target = restoreCurrent() || (await pickTarget(wordLen));
 					buildBoard();
