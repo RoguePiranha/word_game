@@ -10,6 +10,93 @@
 			rel="stylesheet"
 			href="style.css" />
 	</head>
+	<!-- Win Modal -->
+	<div
+		id="winModal"
+		class="modal"
+		role="dialog"
+		aria-modal="true"
+		aria-labelledby="winTitle"
+		hidden>
+		<div
+			class="modal__backdrop"
+			data-close></div>
+		<div
+			class="modal__panel"
+			role="document">
+			<h2
+				id="winTitle"
+				class="modal__title">
+				🎉 Congratulations! You got it!
+			</h2>
+			<p
+				class="modal__subtitle"
+				id="winSub"></p>
+
+			<div class="modal__stats">
+				<div class="stat">
+					<div
+						class="num"
+						id="mTotal">
+						0
+					</div>
+					<div class="lbl">Played</div>
+				</div>
+				<div class="stat">
+					<div
+						class="num"
+						id="mWinRate">
+						0%
+					</div>
+					<div class="lbl">Win Rate</div>
+				</div>
+				<div class="stat">
+					<div
+						class="num"
+						id="mCurrent">
+						0
+					</div>
+					<div class="lbl">Current Streak</div>
+				</div>
+				<div class="stat">
+					<div
+						class="num"
+						id="mMax">
+						0
+					</div>
+					<div class="lbl">Max Streak</div>
+				</div>
+			</div>
+
+			<div class="modal__actions">
+				<button
+					class="btn btn-primary"
+					id="playAgainBtn">
+					Play Again
+				</button>
+				<button
+					class="btn"
+					id="modalShareBtn">
+					Share
+				</button>
+				<button
+					class="btn"
+					id="modalSettingsBtn">
+					Settings
+				</button>
+				<button
+					class="btn"
+					id="closeModalBtn"
+					aria-label="Close">
+					Close
+				</button>
+			</div>
+		</div>
+	</div>
+	<canvas
+		id="fx"
+		class="fx"
+		aria-hidden="true"></canvas>
 	<body>
 		<div class="wrap">
 			<h1 class="title">WORD GUESS</h1>
@@ -634,7 +721,7 @@
 				updateKeyboard(guess, res);
 				if (guess === target) {
 					setStatus(`Nice! You got it in ${row + 1}/${maxRows}.`);
-					markCompleted(wordLen, target, true, row + 1);
+					markCompleted(wordLen, target, true, row + 1, /*showModal=*/ true); // ⬅️ pass flag
 					row = maxRows;
 					return;
 				}
@@ -675,18 +762,157 @@
 			}
 
 			/** === Round completion === */
-			function markCompleted(len, word, won, guesses) {
+			function markCompleted(len, word, won, guesses, showModal = false) {
 				const data = loadSeen(len);
 				if (!data.seen.includes(word)) data.seen.push(word);
 				if (data.seen.length > data.max) data.seen.splice(0, data.seen.length - data.max);
 				saveSeen(len, data);
+
 				const hist = loadHistory();
 				hist.push({ word, len, won, guesses, ts: Date.now() });
 				if (hist.length > 5000) hist.splice(0, hist.length - 5000);
 				saveHistory(hist);
 				updateStats();
 				syncPush();
-				setTimeout(() => resetGame(len), 600);
+
+				if (won && showModal) {
+					openWinModal({ len, word, guesses });
+				} else {
+					// Loss or silent win: keep existing behavior
+					setTimeout(() => resetGame(len), 600);
+				}
+			}
+
+			// ---- Modal & fireworks ----
+			function openWinModal({ len, word, guesses }) {
+				// Stats
+				const s = computeStats(loadHistory());
+				document.getElementById("mTotal").textContent = s.total || 0;
+				document.getElementById("mWinRate").textContent = (s.winRate || 0) + "%";
+				document.getElementById("mCurrent").textContent = s.currentStreak || 0;
+				document.getElementById("mMax").textContent = s.maxStreak || 0;
+				document.body.style.overflow = 'hidden';
+
+				// Subtitle (answer + tries)
+				const tries = `${guesses}/${ATTEMPTS[len][difficulty]}`;
+				document.getElementById("winSub").textContent = `Solved ${len}-letter in ${tries}. Answer: ${word.toUpperCase()}`;
+				document.getElementById('winSub').textContent += ` • Mode: ${difficulty}, Strict: ${hardMode ? 'On' : 'Off'}`;
+				
+				// Show modal
+				const modal = document.getElementById("winModal");
+				modal.hidden = false;
+
+				// focus trapping (basic)
+				const firstBtn = document.getElementById("playAgainBtn");
+				firstBtn?.focus();
+
+				// Fireworks
+				startFireworks(1800);
+			}
+
+			function closeWinModal() {
+				const modal = document.getElementById("winModal");
+				modal.hidden = true;
+				document.body.style.overflow = '';
+				stopFireworks();
+			}
+
+			// Wire modal buttons once on load
+			document.addEventListener("DOMContentLoaded", () => {
+				const modal = document.getElementById("winModal");
+				modal?.addEventListener("click", (e) => {
+					if (e.target.matches("[data-close]")) closeWinModal();
+				});
+
+				document.getElementById("closeModalBtn")?.addEventListener("click", closeWinModal);
+				document.getElementById("playAgainBtn")?.addEventListener("click", () => {
+					closeWinModal();
+					resetGame(wordLen);
+				});
+				document.getElementById("modalSettingsBtn")?.addEventListener("click", () => {
+					closeWinModal();
+					// open the <details id="settings">
+					document.getElementById("settings")?.setAttribute("open", "");
+					// scroll to top for visibility on mobile
+					window.scrollTo({ top: 0, behavior: "smooth" });
+				});
+				document.getElementById("modalShareBtn")?.addEventListener("click", () => {
+					const emoji = renderShare();
+					navigator.clipboard.writeText(emoji).then(() => setStatus("Result copied to clipboard."));
+				});
+			});
+
+			// Simple confetti / fireworks
+			let fxRAF = null,
+				fxRunning = false,
+				fxParts = [];
+			function startFireworks(durationMs = 1500) {
+				const cvs = document.getElementById("fx");
+				if (!cvs) return;
+				const ctx = cvs.getContext("2d");
+				const DPR = Math.max(1, window.devicePixelRatio || 1);
+				function resize() {
+					cvs.width = innerWidth * DPR;
+					cvs.height = innerHeight * DPR;
+				}
+				resize();
+				addEventListener("resize", resize, { once: true });
+
+				fxParts = [];
+				const colors = ["#56d364", "#e3b341", "#5b8cff", "#ff6b6b", "#a78bfa", "#34d399"];
+
+				// spawn particles from 3 bursts
+				function burst() {
+					const cx = Math.random() * cvs.width,
+						cy = Math.random() * cvs.height * 0.4 + cvs.height * 0.1;
+					for (let i = 0; i < 80; i++) {
+						const angle = Math.random() * Math.PI * 2;
+						const speed = Math.random() * 4 + 2;
+						fxParts.push({
+							x: cx,
+							y: cy,
+							vx: Math.cos(angle) * speed,
+							vy: Math.sin(angle) * speed,
+							life: 60 + ((Math.random() * 20) | 0),
+							color: colors[(Math.random() * colors.length) | 0],
+						});
+					}
+				}
+				burst();
+				setTimeout(burst, 300);
+				setTimeout(burst, 600);
+
+				fxRunning = true;
+				const start = performance.now();
+				(function tick() {
+					fxRAF = requestAnimationFrame(tick);
+					ctx.clearRect(0, 0, cvs.width, cvs.height);
+					// gravity
+					for (const p of fxParts) {
+						p.x += p.vx;
+						p.y += p.vy;
+						p.vy += 0.08 * DPR;
+						p.life--;
+						ctx.fillStyle = p.color;
+						ctx.globalAlpha = Math.max(0, p.life / 80);
+						ctx.fillRect(p.x, p.y, 3 * DPR, 3 * DPR);
+					}
+					fxParts = fxParts.filter((p) => p.life > 0);
+					if (performance.now() - start > durationMs && fxParts.length === 0) {
+						stopFireworks();
+					}
+				})();
+			}
+			function stopFireworks() {
+				if (fxRAF) cancelAnimationFrame(fxRAF);
+				fxRAF = null;
+				fxRunning = false;
+				fxParts = [];
+				const cvs = document.getElementById("fx");
+				if (cvs) {
+					const ctx = cvs.getContext("2d");
+					ctx && ctx.clearRect(0, 0, cvs.width, cvs.height);
+				}
 			}
 
 			/** === Controls === */
