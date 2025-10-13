@@ -7,9 +7,10 @@
 	--maybe: #e3b341;
 	--no: #3d3f4b;
 	--accent: #5b8cff;
-	--tile: 64px;
+	--backkey: #a0453e;
 	--gap: 8px;
-	--key-w: 34px;
+	/* Set tile size to percent based on number of row items */
+	--tile: 100%;
 }
 * {
 	box-sizing: border-box;
@@ -75,21 +76,21 @@ header {
 	width: 100%;
 	display: grid;
 	gap: var(--gap);
-	justify-content: center;
 }
 .row {
 	display: grid;
 	gap: var(--gap);
+	width: 100%;
 }
 .tile {
-	width: var(--tile);
-	height: var(--tile);
+	width: 100%;
+	aspect-ratio: 1;
 	border: 2px solid #2b2e3a;
 	border-radius: 10px;
 	display: grid;
 	place-items: center;
 	font-weight: 800;
-	font-size: clamp(18px, calc(var(--tile) * 0.44), 36px);
+	font-size: clamp(18px, calc(var(--tile) * 1.0), 36px);
 	text-transform: uppercase;
 	background: #121420;
 	transition: transform 0.08s, background 0.15s, border-color 0.15s;
@@ -115,15 +116,20 @@ header {
 /* Keyboard */
 .keyboard {
 	margin-top: auto;
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
 }
 .kb-row {
 	display: flex;
 	gap: 6px;
-	justify-content: center;
+	width: 100%;
 }
 
 .key {
-	min-width: var(--key-w);
+	flex: 1;
+	min-width: 0;
 	padding: 10px 8px;
 	border-radius: 10px;
 	border: 1px solid #2a2d3a;
@@ -131,6 +137,17 @@ header {
 	color: #eef1ff;
 	cursor: pointer;
 	font-weight: 700;
+	text-align: center;
+}
+
+/* Special keys get more space */
+.key[data-key="↵"] {
+	flex: 1.5;
+	background: var(--accent);
+}
+.key[data-key="⌫"] {
+	flex: 1.5;
+	background: var(--backkey);
 }
 
 /* USED keys: much higher contrast */
@@ -308,7 +325,6 @@ details.stats summary {
 /* Mobile keyboard improvements */
 @media (max-width: 768px) {
 	.keyboard {
-		width: 100%;
 		padding: 0 10px;
 	}
 	.kb-row {
@@ -316,17 +332,8 @@ details.stats summary {
 		margin-bottom: 6px;
 	}
 	.key {
-		flex: 1;
-		min-width: 0;
-		max-width: none;
 		padding: 12px 4px;
 		font-size: 14px;
-	}
-	.key[data-key="↵"] {
-		flex: 1.5;
-	}
-	.key[data-key="⌫"] {
-		flex: 1.5;
 	}
 }
 
