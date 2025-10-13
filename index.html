@@ -1061,7 +1061,7 @@
 					buildBoard();
 					buildKeyboard();
 					localStorage.setItem(`wg-current-${wordLen}`, target);
-					setStatus(`Guess the ${wordLen}-letter word • Attempts: ${maxRows}. Good luck!`);
+					setStatus(`Guess the ${wordLen}-letter word • Attempts: ${maxRows}.\nGood luck!`);
 					updateStats();
 					syncPull(); // This now handles the check internally
 					addEventListener("resize", updateLayout);
