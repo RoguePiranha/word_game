@@ -1,3 +1,5 @@
 /words/*
-  Cache-Control: public, max-age=604800, immutable
-  Access-Control-Allow-Origin: *
+    Cache-Control: public, max-age=604800, immutable
+    Access-Control-Allow-Origin: https://wordgame.sparkpro.io
+    Access-Control-Allow-Headers: Content-Type, X-WordGuess-User
+    Access-Control-Allow-Methods: GET,POST,OPTIONS
