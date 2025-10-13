@@ -303,7 +303,7 @@
 
 		<script>
 			/** === CONFIG === */
-			const WORKER_BASE = `${location.origin}/api`; // set your Worker URL
+			const WORKER_BASE = "wordguess-sync.super-glade-bb1d.workers.dev";
 			const DAILY_CAP_ENABLED = false; // placeholder
 			const DAILY_CAP_LIMIT = 5; // Not used unless the above is true
 
@@ -420,6 +420,10 @@
 				return r.json();
 			}
 			async function syncPull() {
+				if (!WORKER_BASE || !WORKER_BASE.startsWith("http")) {
+					console.log("[sync] No worker configured, skipping pull");
+					return;
+				}
 				try {
 					const remote = await serverGet();
 					for (const len of [4, 5, 6, 7, 8]) {
@@ -442,18 +446,24 @@
 					saveHistory(uniq.slice(-5000));
 					updateStats(remote.stats || computeStats(uniq));
 					setStatus("Synced.");
-				} catch {
-					setStatus("Sync failed (pull).");
+				} catch (error) {
+					console.warn("[sync] Pull failed:", error);
+					setStatus("Sync failed (pull). Playing offline.");
 				}
 			}
 			async function syncPush() {
+				if (!WORKER_BASE || !WORKER_BASE.startsWith("http")) {
+					console.log("[sync] No worker configured, skipping push");
+					return;
+				}
 				try {
 					const seenByLen = {};
 					for (const len of [4, 5, 6, 7, 8]) seenByLen[len] = loadSeen(len).seen;
 					const server = await serverPost({ seenByLen, history: loadHistory() });
 					updateStats(server.stats || {});
-				} catch {
-					setStatus("Sync failed (push).");
+				} catch (error) {
+					console.warn("[sync] Push failed:", error);
+					// Don't show error message for push failures to avoid interrupting gameplay
 				}
 			}
 
@@ -1053,7 +1063,7 @@
 					localStorage.setItem(`wg-current-${wordLen}`, target);
 					setStatus(`Guess the ${wordLen}-letter word • Attempts: ${maxRows}. Good luck!`);
 					updateStats();
-					if (WORKER_BASE && WORKER_BASE.startsWith("http")) syncPull();
+					syncPull(); // This now handles the check internally
 					addEventListener("resize", updateLayout);
 					document.getElementById("statsPanel")?.addEventListener("toggle", updateLayout);
 				} catch (e) {
