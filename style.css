@@ -66,6 +66,9 @@ header {
 .btn[aria-pressed="true"] {
 	outline: 2px solid var(--accent);
 }
+.btn-hidden {
+	display: none;
+}
 .board {
 	width: 100%;
 	display: grid;
