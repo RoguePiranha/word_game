@@ -688,10 +688,10 @@ details.stats summary {
 /* small screens: stretch edge-to-edge */
 @media (max-width: 520px) {
 	.settings-panel {
-		position: fixed !important;
-		top: 60px !important;
-		left: 10px !important;
-		right: 10px !important;
+		position: absolute !important;
+		top: calc(100% + 8px) !important;
+		left: -10px !important;
+		right: -10px !important;
 		z-index: 9999 !important;
 		background: #121420 !important;
 		border: 1px solid #2a2d3a !important;
@@ -700,8 +700,9 @@ details.stats summary {
 		box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
 		width: auto !important;
 		max-width: none !important;
-		max-height: calc(100vh - 80px) !important;
+		max-height: calc(100vh - 120px) !important;
 		overflow-y: auto !important;
+		min-width: calc(100vw - 20px);
 	}
 	
 	/* Light theme mobile settings panel override */
