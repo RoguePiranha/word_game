@@ -17,139 +17,13 @@ import json, re, sys, os, argparse
 import glob
 from collections import defaultdict
 
-# -------- Latin-ish detection --------
-LATIN_SUFFIXES = (
-    "ae", "ii", "orum", "arum", "idae", "iscus", "ensis", "rix", "um", "us", "ix", "ex"
-)
-
-# very common English words with Latin-looking endings we KEEP
-ALLOW_LATIN = {
-    # -us / -um common in English
-    "bonus","focus","status","virus","campus","apparatus",
-    "album","forum","museum","stadium","premium","vacuum","minimum","maximum","medium","platinum",
-    "momentum","quantum","spectrum",
-    "fungus","census","thesaurus",
-    # -ix that are mainstream English
-    "matrix","prefix","suffix","affix","helix","remix","appendix","phoenix",
-    # -ae that are mainstream
-    "algae","larvae",
-}
 
 # stems from stripped contractions that we NEVER want
 BAD_TARGETS = {
     "aint","arent","cant","couldnt","didnt","doesn","doesnt","dont","hadnt","hasnt","havent",
-    "isn","isnt","shouldnt","wasnt","werent","wouldnt","wont","im","ive","youre","theyre","were","weve",
+    "isnt","shouldnt","wasnt","werent","wouldnt","wont","youre","theyre","were","weve",
 }
 
-latin_pat = re.compile(r'[a-z]+')
-
-def looks_latin(w: str) -> bool:
-    if w in ALLOW_LATIN:
-        return False
-    # strong Latin-y endings
-    for suf in LATIN_SUFFIXES:
-        if w.endswith(suf):
-            # relax for very short words like "bus", "gas", etc.
-            if suf in ("us","um","ix","ex") and len(w) <= 4:
-                return False
-            return True
-    return False
-
-# -------- Heuristic English lemmatizer (no deps) --------
-vowel = set("aeiou")
-def _maybe(word, cand, vocab):
-    """Return candidate if it exists in vocab, else None."""
-    return cand if cand in vocab else None
-
-def lemma_candidates(word: str):
-    """Generate plausible base-form candidates for word."""
-    w = word
-    L = len(w)
-    cands = set()
-
-    # 1) Obvious no-go stems
-    if w in BAD_TARGETS:
-        cands.add("")  # forces drop later
-
-    # 2) Plural -> singular
-    if L > 3 and w.endswith("ies"):        # studies -> study
-        cands.add(w[:-3] + "y")
-    if L > 3 and w.endswith("ves"):        # leaves -> leaf / life -> lives handled by vocab check
-        cands.add(w[:-3] + "f")
-        cands.add(w[:-3] + "fe")
-    if L > 3 and w.endswith("men"):        # women -> woman
-        cands.add(w[:-3] + "man")
-    if L > 3 and w.endswith("ses") or w.endswith("xes") or w.endswith("zes") or w.endswith("ches") or w.endswith("shes"):
-        cands.add(w[:-2])                  # buses -> bus, boxes -> box, etc.
-    if L > 2 and w.endswith("s"):          # cars -> car (but beware "as", "is")
-        cands.add(w[:-1])
-
-    irregular_plurals = {
-        "children":"child","teeth":"tooth","feet":"foot","geese":"goose","mice":"mouse","men":"man","women":"woman",
-    }
-    if w in irregular_plurals:
-        cands.add(irregular_plurals[w])
-
-    # 3) Verb tenses
-    if L > 4 and w.endswith("ing"):
-        cands.add(w[:-3])                  # making -> mak
-        cands.add(w[:-3] + "e")            # making -> make
-        if L > 5 and w[-4] == w[-5]:       # running -> run
-            cands.add(w[:-4])
-    if L > 3 and w.endswith("ed"):
-        cands.add(w[:-2])                  # played -> play
-        cands.add(w[:-1])                  # planned -> plan
-        if L > 4 and w[-3] == w[-4]:
-            cands.add(w[:-3])              # stopped -> stop
-        if L > 3 and w.endswith("ied"):    # studied -> study
-            cands.add(w[:-3] + "y")
-    if L > 2 and w.endswith("d"):
-        cands.add(w[:-1])                  # loved -> love (falls back if base exists)
-
-    # 4) Third-person singular verbs
-    if L > 3 and (w.endswith("es")):
-        cands.add(w[:-2])
-    # 5) Adjective comparative/superlative
-    if L > 3 and w.endswith("er"):
-        cands.add(w[:-2])
-        if w.endswith("ier"):
-            cands.add(w[:-3] + "y")
-        if L > 4 and w[-3] == w[-4]:
-            cands.add(w[:-3])
-    if L > 4 and w.endswith("est"):
-        cands.add(w[:-3])
-        if w.endswith("iest"):
-            cands.add(w[:-4] + "y")
-        if L > 5 and w[-4] == w[-5]:
-            cands.add(w[:-4])
-
-    # 6) Past participles -en (taken -> take) — risky but try both
-    if L > 3 and w.endswith("en"):
-        cands.add(w[:-2])
-        cands.add(w[:-2] + "e")
-
-    # 7) Default: itself (for base words)
-    cands.add(w)
-    return cands
-
-def pick_base(word: str, vocab: set, allow_any: bool) -> str:
-    """
-    Return the base form to keep. If allow_any=False, we only keep candidates that exist in vocab.
-    If allow_any=True, we pick the most plausible shorter candidate even if not present.
-    """
-    ws = word
-    cands = lemma_candidates(ws)
-
-    if not allow_any:
-        ranked = sorted(cands, key=lambda x: (len(x), x))  # prefer shorter
-        for c in ranked:
-            if c in vocab:
-                return c
-        return ws
-
-    # allow_any: prefer the shortest candidate; fallback to original
-    ranked = sorted(cands, key=lambda x: (len(x), x))
-    return ranked[0] if ranked else ws
 
 # -------- Optional frequency filter --------
 def make_zipf_fn(min_zipf: float):
@@ -180,26 +54,14 @@ def process_files(paths, min_zipf=None, allow_any=False):
     # Remove clearly Latin-y forms (except allowlist) and contraction stems
     stage1 = set()
     for w in all_words:
-        if w in BAD_TARGETS:
-            continue
-        if looks_latin(w):
+        # Skip contractions (words with apostrophes) and contraction stems
+        if "'" in w or w in BAD_TARGETS:
             continue
         stage1.add(w)
 
-    # Map each word to a base form
-    base_map = {}
-    for w in stage1:
-        base = pick_base(w, stage1, allow_any=allow_any)
-        base_map[w] = base
+    # Simply keep all words that passed the contraction filter
+    keep = stage1
 
-    # Keep only base forms; if both base and inflection exist, drop the longer inflection
-    keep = set()
-    for w in stage1:
-        base = base_map[w]
-        # if base still looks Latin and word doesn't, prefer non-Latin
-        if looks_latin(base) and not looks_latin(w):
-            base = w
-        keep.add(base)
 
     # Optional frequency filter
     if min_zipf is not None:

@@ -116,7 +116,7 @@ details.stats summary {
 /* Light theme settings panel */
 :root.light-theme .settings-panel {
 	background: #ffffff !important;
-	border-color: #dee2e6 !important;
+	border: 2px solid #adb5bd !important;
 	box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15) !important;
 }
 
@@ -150,9 +150,28 @@ details.stats summary {
 :root.light-theme .stat .lbl {
 	color: #6c757d !important;
 }
+
+/* Light theme settings panel titles */
+:root.light-theme .config {
+	color: #495057 !important;
+}
+
 * {
 	box-sizing: border-box;
 }
+
+/* Hide scrollbars globally */
+html, body {
+	scrollbar-width: none; /* Firefox */
+	-ms-overflow-style: none; /* IE and Edge */
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+*::-webkit-scrollbar {
+	display: none; /* Chrome, Safari, Opera */
+}
+
 body {
 	margin: 0;
 	background: var(--bg);
@@ -179,6 +198,12 @@ body {
 	max-height: 100vh;
 	max-height: 100dvh;
 	overflow-y: auto;
+	scrollbar-width: none; /* Firefox */
+	-ms-overflow-style: none; /* IE and Edge */
+}
+
+.wrap::-webkit-scrollbar {
+	display: none; /* Chrome, Safari, Opera */
 }
 header {
 	display: flex;
@@ -705,7 +730,7 @@ details.stats summary {
 	z-index: 1000;
 	width: min(calc(100vw - 40px), 620px);
 	background: #121420;
-	border: 1px solid #2a2d3a;
+	border: 2px solid #2a2d3a;
 	border-radius: 6px;
 	padding: 12px;
 	display: grid;
@@ -713,6 +738,12 @@ details.stats summary {
 	box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
 	max-height: calc(100vh - 120px);
 	overflow-y: auto;
+	scrollbar-width: none; /* Firefox */
+	-ms-overflow-style: none; /* IE and Edge */
+}
+
+.settings-panel::-webkit-scrollbar {
+	display: none; /* Chrome, Safari, Opera */
 }
 
 /* small screens: stretch edge-to-edge */
@@ -720,25 +751,30 @@ details.stats summary {
 	.settings-panel {
 		position: absolute !important;
 		top: calc(100% + 8px) !important;
-		left: -10px !important;
 		right: -10px !important;
+		left: auto !important;
 		z-index: 9999 !important;
 		background: #121420 !important;
-		border: 1px solid #2a2d3a !important;
+		border: 2px solid #2a2d3a !important;
 		border-radius: 6px;
 		padding: 12px;
 		box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
-		width: auto !important;
+		width: calc(100vw - 20px) !important;
 		max-width: none !important;
 		max-height: calc(100vh - 120px) !important;
 		overflow-y: auto !important;
-		min-width: calc(100vw - 20px);
+		scrollbar-width: none !important; /* Firefox */
+		-ms-overflow-style: none !important; /* IE and Edge */
+	}
+	
+	.settings-panel::-webkit-scrollbar {
+		display: none !important; /* Chrome, Safari, Opera */
 	}
 	
 	/* Light theme mobile settings panel override */
 	:root.light-theme .settings-panel {
 		background: #ffffff !important;
-		border: 1px solid #dee2e6 !important;
+		border: 2px solid #adb5bd !important;
 		box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15) !important;
 	}
 	
