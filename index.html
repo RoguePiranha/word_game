@@ -227,11 +227,6 @@
 						<div class="controls">
 							<div
 								class="btn"
-								id="history">
-								History
-							</div>
-							<div
-								class="btn"
 								id="resetSeen">
 								Reset Seen
 							</div>
@@ -256,6 +251,86 @@
 								📱 Add to Home Screen
 							</div>
 						</div>
+
+						<details
+							class="stats"
+							id="statsPanel">
+							<summary>Stats</summary>
+							<div class="stats-grid">
+								<div class="stat">
+									<div
+										class="num"
+										id="stTotal">
+										0
+									</div>
+									<div class="lbl">Total Played</div>
+								</div>
+								<div class="stat">
+									<div
+										class="num"
+										id="stWinRate">
+										0%
+									</div>
+									<div class="lbl">Overall Win Rate</div>
+								</div>
+								<div class="stat">
+									<div
+										class="num"
+										id="stCurrent">
+										0
+									</div>
+									<div class="lbl">Current Streak</div>
+								</div>
+								<div class="stat">
+									<div
+										class="num"
+										id="stMax">
+										0
+									</div>
+									<div class="lbl">Max Streak</div>
+								</div>
+								<div class="stat">
+									<div
+										class="num"
+										id="stL4">
+										0% (0)
+									</div>
+									<div class="lbl">4-letter WR</div>
+								</div>
+								<div class="stat">
+									<div
+										class="num"
+										id="stL5">
+										0% (0)
+									</div>
+									<div class="lbl">5-letter WR</div>
+								</div>
+								<div class="stat">
+									<div
+										class="num"
+										id="stL6">
+										0% (0)
+									</div>
+									<div class="lbl">6-letter WR</div>
+								</div>
+								<div class="stat">
+									<div
+										class="num"
+										id="stL7">
+										0% (0)
+									</div>
+									<div class="lbl">7-letter WR</div>
+								</div>
+								<div class="stat">
+									<div
+										class="num"
+										id="stL8">
+										0% (0)
+									</div>
+									<div class="lbl">8-letter WR</div>
+								</div>
+							</div>
+						</details>
 					</div>
 				</details>
 			</header>
@@ -271,61 +346,6 @@
 					class="status"
 					id="status"></div>
 			</main>
-			<details
-				class="stats"
-				id="statsPanel">
-				<summary>Stats</summary>
-				<div class="stats-grid">
-					<div class="stat">
-						<div
-							class="num"
-							id="stTotal">
-							0
-						</div>
-						<div class="lbl">Played</div>
-					</div>
-					<div class="stat">
-						<div
-							class="num"
-							id="stWinRate">
-							0%
-						</div>
-						<div class="lbl">Win Rate</div>
-					</div>
-					<div class="stat">
-						<div
-							class="num"
-							id="stCurrent">
-							0
-						</div>
-						<div class="lbl">Current Streak</div>
-					</div>
-					<div class="stat">
-						<div
-							class="num"
-							id="stMax">
-							0
-						</div>
-						<div class="lbl">Max Streak</div>
-					</div>
-					<div class="stat">
-						<div
-							class="num"
-							id="stL5">
-							0%
-						</div>
-						<div class="lbl">5-letter WR</div>
-					</div>
-					<div class="stat">
-						<div
-							class="num"
-							id="stL6">
-							0%
-						</div>
-						<div class="lbl">6-letter WR</div>
-					</div>
-				</div>
-			</details>
 		</div>
 
 		<script>
@@ -523,8 +543,14 @@
 				document.getElementById("stWinRate").textContent = (s.winRate || 0) + "%";
 				document.getElementById("stCurrent").textContent = s.currentStreak || 0;
 				document.getElementById("stMax").textContent = s.maxStreak || 0;
-				document.getElementById("stL5").textContent = (s.perLen?.[5]?.winRate || 0) + "%";
-				document.getElementById("stL6").textContent = (s.perLen?.[6]?.winRate || 0) + "%";
+				
+				// Update per-length stats with win rate and games played
+				for (const len of [4, 5, 6, 7, 8]) {
+					const lenStats = s.perLen?.[len];
+					const winRate = lenStats?.winRate || 0;
+					const total = lenStats?.total || 0;
+					document.getElementById(`stL${len}`).textContent = `${winRate}% (${total})`;
+				}
 			}
 
 			/** === Daily cap placeholder === */
@@ -990,11 +1016,6 @@
 			document.getElementById("copy").onclick = () => {
 				const emoji = renderShare();
 				navigator.clipboard.writeText(emoji).then(() => setStatus("Result copied to clipboard."));
-			};
-			document.getElementById("history").onclick = () => {
-				const total = loadHistory().length;
-				const per = [4, 5, 6, 7, 8].map((n) => `${n}L:${getSeenCount(n)}`).join(" • ");
-				setStatus(`Played: ${total}. Seen — ${per}.`);
 			};
 			document.getElementById("resetSeen").onclick = () => {
 				clearSeen(wordLen);

@@ -224,7 +224,7 @@ details.stats summary {
 }
 .stats-grid {
 	display: grid;
-	grid-template-columns: repeat(3, 1fr);
+	grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
 	gap: 10px;
 	margin-top: 6px;
 }
@@ -361,7 +361,7 @@ details.stats summary {
 }
 @media (max-width: 420px) {
 	.stats-grid {
-		grid-template-columns: repeat(2, 1fr);
+		grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
 	}
 	.settings-panel {
 		padding: 6px;
