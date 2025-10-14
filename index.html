@@ -248,14 +248,14 @@
 									id="lightBtn"
 									onclick="setTheme('light')"
 									aria-pressed="false">
-									☀️ Light
+									○ Light
 								</button>
 								<button
 									class="btn theme-btn dark-btn"
 									id="darkBtn"
 									onclick="setTheme('dark')"
 									aria-pressed="true">
-									🌙 Dark
+									● Dark
 								</button>
 							</div>
 						</div>
@@ -730,12 +730,21 @@
 
 			/** === Board & Input === */
 			function buildBoard() {
+				console.log("buildBoard called, maxRows:", maxRows, "wordLen:", wordLen);
 				board.innerHTML = "";
 				board.style.gridTemplateRows = `repeat(${maxRows}, 1fr)`;
+				board.style.display = "grid";
+				board.style.opacity = "1";
+				board.style.visibility = "visible";
+				console.log("Board element:", board, "innerHTML cleared, styles set");
+				
 				for (let r = 0; r < maxRows; r++) {
 					const rowEl = document.createElement("div");
 					rowEl.className = "row";
 					rowEl.style.gridTemplateColumns = `repeat(${wordLen}, 1fr)`;
+					rowEl.style.display = "grid";
+					rowEl.style.opacity = "1";
+					rowEl.style.visibility = "visible";
 					for (let c = 0; c < wordLen; c++) {
 						const t = document.createElement("div");
 						t.className = "tile";
@@ -744,7 +753,9 @@
 						rowEl.appendChild(t);
 					}
 					board.appendChild(rowEl);
+					console.log("Added row", r, "with", wordLen, "tiles");
 				}
+				console.log("Board built with", maxRows, "rows");
 				grid = Array.from({ length: maxRows }, () => Array(wordLen).fill(""));
 				row = 0;
 				col = 0;
@@ -764,7 +775,7 @@
 					wrap.appendChild(kb); // ensure it's last
 				}
 
-				const rows = ["QWERTYUIOP", "ASDFGHJKL", "↵ZXCVBNM⌫"];
+				const rows = ["QWERTYUIOP", "ASDFGHJKL", "⏎ZXCVBNM←"];
 				kb.innerHTML = "";
 				rows.forEach((r) => {
 					const div = document.createElement("div");
@@ -772,7 +783,7 @@
 					[...r].forEach((ch) => {
 						const b = document.createElement("button");
 						b.className = "key";
-						b.textContent = ch === "↵" ? "Enter" : ch === "⌫" ? "Back" : ch;
+						b.textContent = ch === "⏎" ? "Enter" : ch === "←" ? "←" : ch;
 						b.dataset.key = ch;
 						b.onclick = () => onPress(ch);
 						div.appendChild(b);
@@ -781,21 +792,21 @@
 				});
 			}
 			addEventListener("keydown", (e) => {
-				if (e.key === "Enter") return onPress("↵");
-				if (e.key === "Backspace") return onPress("⌫");
+				if (e.key === "Enter") return onPress("⏎");
+				if (e.key === "Backspace") return onPress("←");
 				const k = e.key.toUpperCase();
 				if (/^[A-Z]$/.test(k)) onPress(k);
 			});
 			function onPress(k) {
 				if (row >= maxRows) return;
-				if (k === "⌫") {
+				if (k === "←") {
 					if (col > 0) {
 						col--;
 						setCell(row, col, "");
 					}
 					return;
 				}
-				if (k === "↵") {
+				if (k === "⏎") {
 					handleEnter();
 					return;
 				}
@@ -1374,16 +1385,20 @@
 				updateLayout();
 			}
 			async function init() {
+				console.log("Init starting...");
 				try {
 					maxRows = ATTEMPTS[wordLen][difficulty];
+					console.log("Building board immediately...");
+					buildBoard(); // Build board first, before async operations
+					buildKeyboard();
+					console.log("Board and keyboard built");
+					
 					const list = await loadWords(wordLen);
 					if (!list.length) throw new Error("No word list loaded");
 					WORDS[wordLen] = list; // ensure populated
 					VALID[wordLen] = list; // ensure populated
 
 					target = restoreCurrent() || (await pickTarget(wordLen));
-					buildBoard();
-					buildKeyboard();
 					localStorage.setItem(`wg-current-${wordLen}`, target);
 					setStatus(`Guess the ${wordLen}-letter word • Attempts: ${maxRows}.\nGood luck!`);
 					
@@ -1395,9 +1410,13 @@
 					syncPull(); // This now handles the check internally
 					addEventListener("resize", updateLayout);
 					document.getElementById("statsPanel")?.addEventListener("toggle", updateLayout);
+					console.log("Init completed successfully");
 				} catch (e) {
-					console.error(e);
+					console.error("Init error:", e);
 					setStatus("Init failed. Check that ./words files exist.");
+					// Build board anyway even if words fail to load
+					buildBoard();
+					buildKeyboard();
 				}
 			}
 			init();

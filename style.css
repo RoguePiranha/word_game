@@ -121,12 +121,12 @@ details.stats summary {
 }
 
 /* Light theme Enter and Backspace keys keep their original colors */
-:root.light-theme .key[data-key="↵"] {
+:root.light-theme .key[data-key="⏎"] {
 	background: var(--accent);
 	color: #ffffff;
 }
 
-:root.light-theme .key[data-key="⌫"] {
+:root.light-theme .key[data-key="←"] {
 	background: var(--backkey);
 	color: #ffffff;
 }
@@ -260,17 +260,17 @@ header {
 }
 .board {
 	width: 100%;
-	display: grid;
+	display: grid !important;
 	gap: var(--gap);
-	opacity: 1;
-	visibility: visible;
+	opacity: 1 !important;
+	visibility: visible !important;
 }
 .row {
-	display: grid;
+	display: grid !important;
 	gap: var(--gap);
 	width: 100%;
-	opacity: 1;
-	visibility: visible;
+	opacity: 1 !important;
+	visibility: visible !important;
 }
 .tile {
 	width: 100%;
@@ -570,11 +570,11 @@ header {
 }
 
 /* Special keys get more space */
-.key[data-key="↵"] {
+.key[data-key="⏎"] {
 	flex: 1.5;
 	background: var(--accent);
 }
-.key[data-key="⌫"] {
+.key[data-key="←"] {
 	flex: 1.5;
 	background: var(--backkey);
 }
