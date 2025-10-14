@@ -237,6 +237,19 @@
 							</button>
 						</div>
 
+						<div
+							class="controls"
+							role="group"
+							aria-label="Theme">
+							<span class="config">Theme:</span>
+							<button
+								class="btn theme-toggle"
+								id="themeToggle"
+								aria-pressed="false">
+								🌙 Dark
+							</button>
+						</div>
+
 						<div class="controls">
 							<div
 								class="btn"
@@ -486,6 +499,45 @@
 				const current = loadHintsUsed();
 				saveHintsUsed(current + 1);
 				return current + 1;
+			}
+
+			/** === Theme === */
+			function loadTheme() {
+				try {
+					return localStorage.getItem("wg-theme") || "dark";
+				} catch {
+					return "dark";
+				}
+			}
+			function saveTheme(theme) {
+				localStorage.setItem("wg-theme", theme);
+			}
+			function applyTheme(theme) {
+				const root = document.documentElement;
+				const themeToggle = document.getElementById("themeToggle");
+				
+				if (theme === "light") {
+					root.classList.add("light-theme");
+					themeToggle.textContent = "☀️ Light";
+					themeToggle.setAttribute("aria-pressed", "true");
+				} else {
+					root.classList.remove("light-theme");
+					themeToggle.textContent = "🌙 Dark";
+					themeToggle.setAttribute("aria-pressed", "false");
+				}
+				
+				// Update meta theme-color for mobile browsers
+				const metaTheme = document.querySelector('meta[name="theme-color"]');
+				if (metaTheme) {
+					metaTheme.content = theme === "light" ? "#ffffff" : "#1a1a1a";
+				}
+			}
+			function toggleTheme() {
+				const currentTheme = loadTheme();
+				const newTheme = currentTheme === "light" ? "dark" : "light";
+				saveTheme(newTheme);
+				applyTheme(newTheme);
+				setStatus(`Switched to ${newTheme} mode`);
 			}
 
 			/** === Sync (KV Worker) === */
@@ -862,10 +914,11 @@
 					setTimeout(() => {
 						t.classList.add("water-fill", res[c]);
 						
-						// Clean up animation class after animation completes
+						// Clean up animation class after animation completes (longer for mobile)
+						const cleanupDelay = window.innerWidth <= 768 ? 1400 : 1200;
 						setTimeout(() => {
 							t.classList.remove("water-fill");
-						}, 1200);
+						}, cleanupDelay);
 					}, c * 200); // 200ms delay between each tile
 				}
 			}
@@ -1078,6 +1131,9 @@
 			};
 			document.getElementById("hint").onclick = () => {
 				useHint();
+			};
+			document.getElementById("themeToggle").onclick = () => {
+				toggleTheme();
 			};
 			document.getElementById("resetSeen").onclick = () => {
 				clearSeen(wordLen);
@@ -1302,6 +1358,11 @@
 					buildKeyboard();
 					localStorage.setItem(`wg-current-${wordLen}`, target);
 					setStatus(`Guess the ${wordLen}-letter word • Attempts: ${maxRows}.\nGood luck!`);
+					
+					// Initialize theme
+					const savedTheme = loadTheme();
+					applyTheme(savedTheme);
+					
 					updateStats();
 					syncPull(); // This now handles the check internally
 					addEventListener("resize", updateLayout);
