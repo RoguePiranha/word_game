@@ -12,6 +12,13 @@
 	--tile: 100%;
 }
 
+/* Global smooth transitions for all elements during theme changes */
+*,
+*::before,
+*::after {
+	transition: background-color 2.5s ease, color 2.5s ease, border-color 2.5s ease, box-shadow 2.5s ease !important;
+}
+
 /* Light theme */
 :root.light-theme {
 	--bg: #ffffff;
@@ -46,13 +53,13 @@
 
 :root.light-theme .tile.no {
 	color: #495057 !important;
-	background: #ced4da;
-	border-color: #adb5bd;
+	background: #adb5bd;
+	border-color: #868e96;
 }
 
 /* Light theme keyboard adjustments */
 :root.light-theme .key {
-	background: #e9ecef;
+	background: #ced4da;
 	border-color: #adb5bd;
 	color: #212529;
 }
@@ -66,8 +73,8 @@
 }
 
 :root.light-theme .key.no {
-	background: #ced4da;
-	border-color: #adb5bd;
+	background: #adb5bd;
+	border-color: #868e96;
 	color: #495057 !important;
 }
 
@@ -173,6 +180,35 @@ header {
 .btn[aria-pressed="true"] {
 	outline: 2px solid var(--accent);
 }
+
+/* Theme buttons */
+.theme-buttons {
+	display: flex;
+	gap: 6px;
+}
+
+.theme-btn {
+	opacity: 0.5;
+	transform: scale(0.95);
+	transition: opacity 2.5s ease, transform 2.5s ease, background-color 2.5s ease !important;
+}
+
+.theme-btn.active {
+	opacity: 1;
+	transform: scale(1);
+	outline: 2px solid var(--accent);
+}
+
+.light-btn.active {
+	background: linear-gradient(135deg, #fff3cd, #f8f9fa);
+	color: #495057;
+}
+
+.dark-btn.active {
+	background: linear-gradient(135deg, #2c3e50, #34495e);
+	color: #ecf0f1;
+}
+
 .btn-hidden {
 	display: none;
 }
@@ -588,6 +624,7 @@ details.stats summary {
 	color: #a3a7b7;
 	font-weight: 600;
 	margin-right: 6px;
+	text-align: left;
 }
 /* Settings popover (overlay) */
 .settings {
@@ -652,7 +689,7 @@ details.stats summary {
 	
 	.settings-panel .controls .config {
 		width: 100% !important;
-		text-align: center;
+		text-align: left;
 		margin-bottom: 6px;
 		font-size: 14px;
 		font-weight: 600;
