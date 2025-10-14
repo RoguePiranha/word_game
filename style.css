@@ -286,13 +286,19 @@ details.stats summary {
 @media (max-width: 520px) {
 	.settings-panel {
 		position: fixed !important;
-		left: 50% !important;
-		transform: translateX(-50%) !important;
-		width: min(calc(100vw - 40px), 680px) !important;
+		top: 60px !important;
+		left: 10px !important;
+		right: 10px !important;
+		z-index: 9999 !important;
+		background: #121420 !important;
+		border: 1px solid #2a2d3a !important;
+		border-radius: 12px;
+		padding: 12px;
+		box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+		width: auto !important;
 		max-width: none !important;
-		padding: 8px;
-		justify-self: unset !important;
 	}
+	
 	.settings-panel .controls .config {
 		width: 100% !important;
 		text-align: center;

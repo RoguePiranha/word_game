@@ -1132,6 +1132,28 @@
 			}
 			wireModalHandlers();
 
+			/** === Settings Panel Click-Outside-to-Close === */
+			function wireSettingsHandlers() {
+				const settingsDetails = document.getElementById("settings");
+				const settingsPanel = document.querySelector(".settings-panel");
+				
+				// Listen for clicks on the document
+				document.addEventListener("click", (e) => {
+					// Only proceed if settings panel is open
+					if (!settingsDetails || !settingsDetails.open) return;
+					
+					// Check if click is outside the settings panel and its summary
+					const isClickInsidePanel = settingsPanel?.contains(e.target);
+					const isClickOnSummary = settingsDetails.querySelector("summary")?.contains(e.target);
+					
+					// If click is outside both the panel and summary, close the settings
+					if (!isClickInsidePanel && !isClickOnSummary) {
+						settingsDetails.removeAttribute("open");
+					}
+				});
+			}
+			wireSettingsHandlers();
+
 			/** === Init / Reset === */
 			async function resetGame(len = wordLen) {
 				if (!checkDailyCap()) return;
