@@ -13,17 +13,43 @@
 }
 
 /* Global smooth transitions for all elements during theme changes */
-*,
-*::before,
-*::after {
+/* Exclude critical layout elements from transitions to prevent display issues */
+*:not(.board):not(.row):not(.tile):not(.key):not(.keyboard),
+*:not(.board):not(.row):not(.tile):not(.key):not(.keyboard)::before,
+*:not(.board):not(.row):not(.tile):not(.key):not(.keyboard)::after {
+	transition: background-color 2.5s ease, color 2.5s ease, border-color 2.5s ease, box-shadow 2.5s ease !important;
+}
+
+/* Separate transitions for game elements to prevent layout issues */
+.tile,
+.key,
+.btn,
+.theme-btn,
+.settings-panel,
+.stats-grid,
+.stat,
+details.stats,
+details.stats summary {
 	transition: background-color 2.5s ease, color 2.5s ease, border-color 2.5s ease, box-shadow 2.5s ease !important;
 }
 
 /* Faster transitions on mobile for better performance */
 @media (max-width: 768px) {
-	*,
-	*::before,
-	*::after {
+	*:not(.board):not(.row):not(.tile):not(.key):not(.keyboard),
+	*:not(.board):not(.row):not(.tile):not(.key):not(.keyboard)::before,
+	*:not(.board):not(.row):not(.tile):not(.key):not(.keyboard)::after {
+		transition: background-color 1.5s ease, color 1.5s ease, border-color 1.5s ease, box-shadow 1.5s ease !important;
+	}
+	
+	.tile,
+	.key,
+	.btn,
+	.theme-btn,
+	.settings-panel,
+	.stats-grid,
+	.stat,
+	details.stats,
+	details.stats summary {
 		transition: background-color 1.5s ease, color 1.5s ease, border-color 1.5s ease, box-shadow 1.5s ease !important;
 	}
 }
@@ -236,11 +262,15 @@ header {
 	width: 100%;
 	display: grid;
 	gap: var(--gap);
+	opacity: 1;
+	visibility: visible;
 }
 .row {
 	display: grid;
 	gap: var(--gap);
 	width: 100%;
+	opacity: 1;
+	visibility: visible;
 }
 .tile {
 	width: 100%;
