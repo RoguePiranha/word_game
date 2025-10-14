@@ -25,6 +25,7 @@ body {
 	max-height: 100vh;
 	max-height: 100dvh;
 	overflow: hidden;
+	touch-action: manipulation;
 }
 .wrap {
 	display: flex;
@@ -70,11 +71,15 @@ header {
 	background: var(--panel);
 	color: var(--text);
 	cursor: pointer;
+	touch-action: manipulation;
 }
 .btn[aria-pressed="true"] {
 	outline: 2px solid var(--accent);
 }
 .btn-hidden {
+	display: none;
+}
+.btn-hint-hidden {
 	display: none;
 }
 .board {
@@ -143,6 +148,7 @@ header {
 	cursor: pointer;
 	font-weight: 700;
 	text-align: center;
+	touch-action: manipulation;
 }
 
 /* Special keys get more space */

@@ -4,7 +4,7 @@
 		<meta charset="utf-8" />
 		<meta
 			name="viewport"
-			content="width=device-width,initial-scale=1" />
+			content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
 		<title>Word Guess</title>
 		<meta
 			name="description"
@@ -138,6 +138,11 @@
 					class="btn"
 					id="copy">
 					Share
+				</div>
+				<div
+					class="btn btn-hint-hidden"
+					id="hint">
+					Hint
 				</div>
 				<details
 					id="settings"
@@ -597,6 +602,16 @@
 				document.documentElement.style.setProperty("--tile", tile + "px");
 				const keyW = Math.max(28, Math.min(52, Math.floor(tile * 0.65)));
 				document.documentElement.style.setProperty("--key-w", keyW + "px");
+				
+				// Show/hide hint button based on word length
+				const hintBtn = document.getElementById("hint");
+				if (hintBtn) {
+					if (wordLen >= 6) {
+						hintBtn.classList.remove("btn-hint-hidden");
+					} else {
+						hintBtn.classList.add("btn-hint-hidden");
+					}
+				}
 			}
 
 			/** === Board & Input === */
@@ -1017,6 +1032,9 @@
 				const emoji = renderShare();
 				navigator.clipboard.writeText(emoji).then(() => setStatus("Result copied to clipboard."));
 			};
+			document.getElementById("hint").onclick = () => {
+				useHint();
+			};
 			document.getElementById("resetSeen").onclick = () => {
 				clearSeen(wordLen);
 				setStatus(`Cleared seen for ${wordLen}-letter.`);
@@ -1122,6 +1140,39 @@
 				const fail = row === maxRows && grid[row - 1]?.join("") !== target;
 				const header = `WordGuess ${wordLen}/${maxRows} ${fail ? "X" : row} • ${wordLen}-letter`;
 				return `${header}\n` + lines.join("\n");
+			}
+
+			/** === Hint === */
+			function useHint() {
+				if (wordLen < 6 || !target) return; // Only for 6, 7, 8 letter words
+				
+				// Get all letters from target word that haven't been revealed yet
+				const targetLetters = [...target.toLowerCase()];
+				const unrevealedTargetLetters = targetLetters.filter(letter => !kbState[letter.toUpperCase()]);
+				
+				// Get all letters that haven't been used at all
+				const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+				const unusedLetters = [...alphabet].filter(letter => !kbState[letter]);
+				
+				// If we have unrevealed letters from the target, reveal one as yellow (maybe)
+				if (unrevealedTargetLetters.length > 0) {
+					const randomIndex = Math.floor(Math.random() * unrevealedTargetLetters.length);
+					const letterToReveal = unrevealedTargetLetters[randomIndex].toUpperCase();
+					kbState[letterToReveal] = 'maybe'; // Yellow hint
+				}
+				
+				// If we have unused letters not in target, mark one as gray (no)
+				const unusedNotInTarget = unusedLetters.filter(letter => 
+					!targetLetters.includes(letter.toLowerCase())
+				);
+				if (unusedNotInTarget.length > 0) {
+					const randomIndex = Math.floor(Math.random() * unusedNotInTarget.length);
+					const letterToRemove = unusedNotInTarget[randomIndex];
+					kbState[letterToRemove] = 'no'; // Gray out
+				}
+				
+				renderKeyboardHints();
+				setStatus("Hint used! One letter revealed, one eliminated.");
 			}
 
 			/** === Status === */
