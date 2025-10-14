@@ -66,7 +66,7 @@ header {
 .btn {
 	padding: 8px 10px;
 	border: 1px solid #2a2d3a;
-	border-radius: 10px;
+	border-radius: 6px;
 	background: var(--panel);
 	color: var(--text);
 	cursor: pointer;
@@ -91,7 +91,7 @@ header {
 	width: 100%;
 	aspect-ratio: 1;
 	border: 2px solid #2b2e3a;
-	border-radius: 10px;
+	border-radius: 6px;
 	display: grid;
 	place-items: center;
 	font-weight: 800;
@@ -135,8 +135,8 @@ header {
 .key {
 	flex: 1;
 	min-width: 0;
-	padding: 10px 8px;
-	border-radius: 10px;
+	padding: 20px 8px;
+	border-radius: 6px;
 	border: 1px solid #2a2d3a;
 	background: #3b3f52; /* unused */
 	color: #eef1ff;
@@ -213,7 +213,7 @@ header {
 details.stats {
 	background: #121420;
 	border: 1px solid #2a2d3a;
-	border-radius: 12px;
+	border-radius: 6px;
 	padding: 10px 12px;
 }
 details.stats summary {
@@ -231,7 +231,7 @@ details.stats summary {
 .stat {
 	background: #171923;
 	border: 1px solid #2a2d3a;
-	border-radius: 12px;
+	border-radius: 6px;
 	padding: 10px;
 	text-align: center;
 }
@@ -261,7 +261,7 @@ details.stats summary {
 	border: 1px solid #2a2d3a;
 	background: var(--panel);
 	color: var(--text);
-	border-radius: 10px;
+	border-radius: 6px;
 	padding: 8px 10px;
 	line-height: 1;
 }
@@ -281,7 +281,7 @@ details.stats summary {
 	width: min(calc(100vw - 40px), 620px);
 	background: #121420;
 	border: 1px solid #2a2d3a;
-	border-radius: 12px;
+	border-radius: 6px;
 	padding: 12px;
 	display: grid;
 	gap: 12px;
@@ -300,7 +300,7 @@ details.stats summary {
 		z-index: 9999 !important;
 		background: #121420 !important;
 		border: 1px solid #2a2d3a !important;
-		border-radius: 12px;
+		border-radius: 6px;
 		padding: 12px;
 		box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
 		width: auto !important;
@@ -375,6 +375,7 @@ details.stats summary {
 	}
 }
 
+
 @media (max-width: 360px) {
 	.settings-panel .controls .btn {
 		padding: 4px 2px;
@@ -399,15 +400,11 @@ details.stats summary {
 
 /* Mobile keyboard improvements */
 @media (max-width: 768px) {
-	.keyboard {
-		padding: 0 10px;
-	}
 	.kb-row {
 		gap: 4px;
-		margin-bottom: 6px;
 	}
 	.key {
-		padding: 12px 4px;
+		padding: 20px 4px;
 		font-size: 14px;
 	}
 }
@@ -425,7 +422,7 @@ details.stats summary {
 		padding-top: 10px;
 	}
 	.key {
-		padding: 14px 2px;
+		padding: 18px 2px;
 		font-size: 12px;
 	}
 }
@@ -446,7 +443,7 @@ details.stats summary {
 		padding-top: 8px;
 	}
 	.key {
-		padding: 16px 2px;
+		padding: 20px 2px;
 		font-size: 11px;
 	}
 }
@@ -474,7 +471,7 @@ details.stats summary {
 	width: min(560px, 94vw);
 	background: #141625;
 	border: 1px solid #2a2d3a;
-	border-radius: 14px;
+	border-radius: 6px;
 	padding: 18px;
 	box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
 }
@@ -509,7 +506,7 @@ details.stats summary {
 .modal .stat {
 	background: #171923;
 	border: 1px solid #2a2d3a;
-	border-radius: 12px;
+	border-radius: 6px;
 	padding: 10px;
 	text-align: center;
 }
