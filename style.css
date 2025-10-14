@@ -19,6 +19,15 @@
 	transition: background-color 2.5s ease, color 2.5s ease, border-color 2.5s ease, box-shadow 2.5s ease !important;
 }
 
+/* Faster transitions on mobile for better performance */
+@media (max-width: 768px) {
+	*,
+	*::before,
+	*::after {
+		transition: background-color 1.5s ease, color 1.5s ease, border-color 1.5s ease, box-shadow 1.5s ease !important;
+	}
+}
+
 /* Light theme */
 :root.light-theme {
 	--bg: #ffffff;
@@ -191,6 +200,14 @@ header {
 	opacity: 0.5;
 	transform: scale(0.95);
 	transition: opacity 2.5s ease, transform 2.5s ease, background-color 2.5s ease !important;
+	touch-action: manipulation;
+}
+
+/* Faster theme button transitions on mobile */
+@media (max-width: 768px) {
+	.theme-btn {
+		transition: opacity 1.5s ease, transform 1.5s ease, background-color 1.5s ease !important;
+	}
 }
 
 .theme-btn.active {
@@ -687,9 +704,16 @@ details.stats summary {
 		overflow-y: auto !important;
 	}
 	
+	/* Light theme mobile settings panel override */
+	:root.light-theme .settings-panel {
+		background: #ffffff !important;
+		border: 1px solid #dee2e6 !important;
+		box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15) !important;
+	}
+	
 	.settings-panel .controls .config {
 		width: 100% !important;
-		text-align: left;
+		text-align: left !important;
 		margin-bottom: 6px;
 		font-size: 14px;
 		font-weight: 600;
@@ -710,6 +734,19 @@ details.stats summary {
 		font-size: 12px;
 		text-align: center;
 		min-width: 0;
+	}
+	
+	/* Mobile theme buttons */
+	.theme-buttons {
+		display: flex !important;
+		gap: 4px !important;
+		width: 100%;
+	}
+	
+	.theme-btn {
+		flex: 1;
+		padding: 8px 4px !important;
+		font-size: 12px !important;
 	}
 	/* Difficulty has 4 items, so 2x2 grid works better */
 	.settings-panel .controls[aria-label="Attempts Difficulty"] {

@@ -242,12 +242,22 @@
 							role="group"
 							aria-label="Theme">
 							<span class="config">Theme:</span>
-							<button
-								class="btn theme-toggle"
-								id="themeToggle"
-								aria-pressed="false">
-								🌙 Dark
-							</button>
+							<div class="theme-buttons">
+								<button
+									class="btn theme-btn light-btn"
+									id="lightBtn"
+									onclick="setTheme('light')"
+									aria-pressed="false">
+									☀️ Light
+								</button>
+								<button
+									class="btn theme-btn dark-btn"
+									id="darkBtn"
+									onclick="setTheme('dark')"
+									aria-pressed="true">
+									🌙 Dark
+								</button>
+							</div>
 						</div>
 
 						<div class="controls">
@@ -514,16 +524,29 @@
 			}
 			function applyTheme(theme) {
 				const root = document.documentElement;
-				const themeToggle = document.getElementById("themeToggle");
+				const lightBtn = document.getElementById("lightBtn");
+				const darkBtn = document.getElementById("darkBtn");
 				
 				if (theme === "light") {
 					root.classList.add("light-theme");
-					themeToggle.textContent = "☀️ Light";
-					themeToggle.setAttribute("aria-pressed", "true");
+					if (lightBtn) {
+						lightBtn.setAttribute("aria-pressed", "true");
+						lightBtn.classList.add("active");
+					}
+					if (darkBtn) {
+						darkBtn.setAttribute("aria-pressed", "false");
+						darkBtn.classList.remove("active");
+					}
 				} else {
 					root.classList.remove("light-theme");
-					themeToggle.textContent = "🌙 Dark";
-					themeToggle.setAttribute("aria-pressed", "false");
+					if (lightBtn) {
+						lightBtn.setAttribute("aria-pressed", "false");
+						lightBtn.classList.remove("active");
+					}
+					if (darkBtn) {
+						darkBtn.setAttribute("aria-pressed", "true");
+						darkBtn.classList.add("active");
+					}
 				}
 				
 				// Update meta theme-color for mobile browsers
@@ -532,12 +555,17 @@
 					metaTheme.content = theme === "light" ? "#ffffff" : "#1a1a1a";
 				}
 			}
+			
+			function setTheme(theme) {
+				saveTheme(theme);
+				applyTheme(theme);
+				setStatus(`Switched to ${theme} mode`);
+			}
+			
 			function toggleTheme() {
 				const currentTheme = loadTheme();
 				const newTheme = currentTheme === "light" ? "dark" : "light";
-				saveTheme(newTheme);
-				applyTheme(newTheme);
-				setStatus(`Switched to ${newTheme} mode`);
+				setTheme(newTheme);
 			}
 
 			/** === Sync (KV Worker) === */
