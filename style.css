@@ -123,6 +123,87 @@ header {
 	border-color: var(--no);
 	color: #cbd0e6;
 }
+
+/* Water-fill animation keyframes */
+@keyframes waterFill {
+	0% {
+		background: #121420;
+		border-color: #2b2e3a;
+		transform: scale(1);
+	}
+	50% {
+		transform: scale(1.05);
+	}
+	100% {
+		transform: scale(1);
+	}
+}
+
+/* Animation classes for water-fill effect */
+.tile.water-fill {
+	animation: waterFill 1.2s ease-out forwards;
+}
+
+.tile.water-fill.ok {
+	animation-name: waterFillOk;
+}
+
+.tile.water-fill.maybe {
+	animation-name: waterFillMaybe;
+}
+
+.tile.water-fill.no {
+	animation-name: waterFillNo;
+}
+
+@keyframes waterFillOk {
+	0% {
+		background: #121420;
+		border-color: #2b2e3a;
+		transform: scale(1);
+	}
+	50% {
+		transform: scale(1.05);
+	}
+	100% {
+		background: var(--ok);
+		border-color: var(--ok);
+		transform: scale(1);
+	}
+}
+
+@keyframes waterFillMaybe {
+	0% {
+		background: #121420;
+		border-color: #2b2e3a;
+		transform: scale(1);
+	}
+	50% {
+		transform: scale(1.05);
+	}
+	100% {
+		background: var(--maybe);
+		border-color: var(--maybe);
+		transform: scale(1);
+	}
+}
+
+@keyframes waterFillNo {
+	0% {
+		background: #121420;
+		border-color: #2b2e3a;
+		transform: scale(1);
+	}
+	50% {
+		transform: scale(1.05);
+	}
+	100% {
+		background: var(--no);
+		border-color: var(--no);
+		transform: scale(1);
+	}
+}
+
 /* Keyboard */
 .keyboard {
 	margin-top: auto;

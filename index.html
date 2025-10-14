@@ -89,6 +89,14 @@
 						</div>
 						<div class="lbl">Max Streak</div>
 					</div>
+					<div class="stat">
+						<div
+							class="num"
+							id="mHints">
+							0
+						</div>
+						<div class="lbl">Hints Used</div>
+					</div>
 				</div>
 
 				<div class="modal__actions">
@@ -297,6 +305,14 @@
 								<div class="stat">
 									<div
 										class="num"
+										id="stHints">
+										0
+									</div>
+									<div class="lbl">Hints Used</div>
+								</div>
+								<div class="stat">
+									<div
+										class="num"
 										id="stL4">
 										0% (0)
 									</div>
@@ -377,7 +393,8 @@
 				col = 0,
 				grid = [],
 				hardMode = false,
-				kbState = {};
+				kbState = {},
+				currentGameHints = 0;
 			let WORDS = {}; // loaded lists per length
 			let VALID = {}; // same as WORDS by default
 
@@ -454,6 +471,21 @@
 			}
 			function saveHistory(h) {
 				localStorage.setItem("wg-history", JSON.stringify(h));
+			}
+			function loadHintsUsed() {
+				try {
+					return parseInt(localStorage.getItem("wg-hints-used")) || 0;
+				} catch {
+					return 0;
+				}
+			}
+			function saveHintsUsed(count) {
+				localStorage.setItem("wg-hints-used", count.toString());
+			}
+			function incrementHintsUsed() {
+				const current = loadHintsUsed();
+				saveHintsUsed(current + 1);
+				return current + 1;
 			}
 
 			/** === Sync (KV Worker) === */
@@ -539,7 +571,8 @@
 					const w = items.filter((h) => h.won).length;
 					perLen[len] = { total: items.length, wins: w, winRate: items.length ? Math.round((100 * w) / items.length) : 0 };
 				}
-				return { total, wins, winRate: Math.round((100 * wins) / total), currentStreak: cur, maxStreak: max, perLen };
+				const hintsUsed = loadHintsUsed();
+				return { total, wins, winRate: Math.round((100 * wins) / total), currentStreak: cur, maxStreak: max, perLen, hintsUsed };
 			}
 			function updateStats(stats) {
 				const hist = loadHistory();
@@ -548,6 +581,7 @@
 				document.getElementById("stWinRate").textContent = (s.winRate || 0) + "%";
 				document.getElementById("stCurrent").textContent = s.currentStreak || 0;
 				document.getElementById("stMax").textContent = s.maxStreak || 0;
+				document.getElementById("stHints").textContent = s.hintsUsed || 0;
 				
 				// Update per-length stats with win rate and games played
 				for (const len of [4, 5, 6, 7, 8]) {
@@ -803,7 +837,7 @@
 					setStatus(`Nice! You got it in ${currentrow}/${maxRows}.`);
 					setTimeout(() => {
 						markCompleted(wordLen, target, true, currentrow, /*showModal=*/ true);
-					}, 200);
+					}, wordLen * 200 + 1400); // Wait for water-fill animation to complete
 					row = maxRows;
 					return;
 				}
@@ -811,8 +845,10 @@
 				col = 0;
 				if (row === maxRows) {
 					setStatus(`Answer was ${target.toUpperCase()}.`);
-					// Let markCompleted open a modal for loss too
-					markCompleted(wordLen, target, /*won=*/ false, maxRows, /*showModal=*/ true);
+					// Let markCompleted open a modal for loss too, after animation completes
+					setTimeout(() => {
+						markCompleted(wordLen, target, /*won=*/ false, maxRows, /*showModal=*/ true);
+					}, wordLen * 200 + 1400); // Wait for water-fill animation to complete
 				} else {
 					setStatus("");
 				}
@@ -821,9 +857,16 @@
 				for (let c = 0; c < wordLen; c++) {
 					const t = getTile(r, c);
 					t.classList.remove("filled");
-					t.classList.add(res[c]);
-					t.style.transform = "scale(1.05)";
-					setTimeout(() => (t.style.transform = "scale(1)"), 90);
+					
+					// Add water-fill animation with staggered delay
+					setTimeout(() => {
+						t.classList.add("water-fill", res[c]);
+						
+						// Clean up animation class after animation completes
+						setTimeout(() => {
+							t.classList.remove("water-fill");
+						}, 1200);
+					}, c * 200); // 200ms delay between each tile
 				}
 			}
 
@@ -879,15 +922,16 @@
 				document.getElementById("mWinRate").textContent = (s.winRate || 0) + "%";
 				document.getElementById("mCurrent").textContent = s.currentStreak || 0;
 				document.getElementById("mMax").textContent = s.maxStreak || 0;
+				document.getElementById("mHints").textContent = s.hintsUsed || 0;
 
 				const tries = `${guesses}/${ATTEMPTS[len][difficulty]}`;
 
 				if (won) {
 					title.textContent = "Congratulations! You got it!";
-					sub.textContent = `Answer: ${word.toUpperCase()}\nSolved ${len}-letter in /${ATTEMPTS[len][difficulty]} guesses.\nMode: ${difficulty}, Strict: ${hardMode ? "On" : "Off"}`;
+					sub.textContent = `Answer: ${word.toUpperCase()}\nSolved ${len}-letter in ${tries} guesses.\nHints used: ${currentGameHints}\nMode: ${difficulty}, Strict: ${hardMode ? "On" : "Off"}`;
 				} else {
 					title.textContent = "So close!";
-					sub.textContent = `Answer was ${word.toUpperCase()}.\nOut of tries (${ATTEMPTS[len][difficulty]}).\nMode: ${difficulty}, Strict: ${hardMode ? "On" : "Off"}`;
+					sub.textContent = `Answer was ${word.toUpperCase()}.\nOut of tries (${ATTEMPTS[len][difficulty]}).\nHints used: ${currentGameHints}\nMode: ${difficulty}, Strict: ${hardMode ? "On" : "Off"}`;
 				}
 
 				const modal = document.getElementById("winModal");
@@ -1172,6 +1216,12 @@
 				}
 				
 				renderKeyboardHints();
+				
+				// Track hint usage
+				currentGameHints++; // Increment current game hints
+				const newCount = incrementHintsUsed();
+				updateStats(); // Refresh stats display
+				
 				setStatus("Hint used! One letter revealed, one eliminated.");
 			}
 
@@ -1232,6 +1282,7 @@
 				wordLen = len;
 				maxRows = ATTEMPTS[wordLen][difficulty];
 				target = await pickTarget(wordLen);
+				currentGameHints = 0; // Reset hints for new game
 				buildBoard();
 				buildKeyboard();
 				setStatus(`New ${wordLen}-letter word • Attempts: ${maxRows}. Go!`);
