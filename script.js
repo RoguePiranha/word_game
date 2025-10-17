@@ -457,11 +457,6 @@ function onPress(k) {
     // Don't accept input if game is over (either won or lost)
     if (row >= maxRows) return;
 
-    // Also check if we already won (target matches any previous guess)
-    const alreadyWon = grid.some(rowData =>
-        rowData && rowData.join('').toLowerCase() === target.toLowerCase()
-    );
-    if (alreadyWon) return;
     if (k === "←") {
         if (col > 0) {
             col--;
@@ -1357,8 +1352,10 @@ function getTodaysDailyCompletion(dailyWord) {
 
 // Restore a completed game state
 function restoreCompletedGame(completion) {
+    console.log("restoreCompletedGame called with:", completion);
     // Check if this was a revealed answer
     if (completion.revealed) {
+        console.log("Calling restoreRevealedGame with word:", completion.word);
         // Restore the revealed state (pass the word from completion)
         restoreRevealedGame(completion.word);
         return;
@@ -1419,6 +1416,12 @@ function restoreRevealedGame(word) {
     
     // Use the passed word parameter
     const answerWord = word || target;
+    console.log("Using answerWord:", answerWord);
+    
+    if (!answerWord) {
+        console.error("No word available for reveal restoration!");
+        return;
+    }
     
     // Mark game as over
     row = maxRows;
@@ -1429,6 +1432,11 @@ function restoreRevealedGame(word) {
 
     // Clear the board
     const board = getBoard();
+    if (!board) {
+        console.error("Board element not found!");
+        return;
+    }
+    console.log("Board element found:", board);
     board.innerHTML = '';
     
     // Make board visible
@@ -1438,6 +1446,7 @@ function restoreRevealedGame(word) {
 
     // Set board to show only 1 row (CRITICAL for reveal state)
     board.style.gridTemplateRows = '1fr';
+    console.log("Board gridTemplateRows set to '1fr'");
 
     // Create a single row for the reveal
     const revealRow = document.createElement('div');
@@ -1457,6 +1466,8 @@ function restoreRevealedGame(word) {
 
     board.appendChild(revealRow);
     console.log("Board rebuilt with 1 row, tiles:", revealRow.children.length);
+    console.log("Board children count:", board.children.length);
+    console.log("Board innerHTML length:", board.innerHTML.length);
 
     // Build keyboard
     buildKeyboard();
@@ -1466,6 +1477,7 @@ function restoreRevealedGame(word) {
 
     // Show game over section immediately
     showGameOver("Better luck next time!");
+    console.log("restoreRevealedGame complete");
 }
 
 // Setup navigation event listeners
@@ -1490,18 +1502,26 @@ function setupNavigationListeners() {
 
         // Check if today's daily word has already been completed
         const todaysCompletion = getTodaysDailyCompletion(target);
+        console.log("todaysCompletion:", todaysCompletion);
 
         if (todaysCompletion) {
+            console.log("Restoring completed daily word, revealed:", todaysCompletion.revealed);
             // Restore the completed game
             isDailyWord = false; // Don't save again
             completedGuesses = todaysCompletion.guesses || [];
+            
+            // Restore the game state BEFORE changing screens
             restoreCompletedGame(todaysCompletion);
-            updateLayout();
-            slideToScreen('gameScreen');
-            // Don't override status if it was a revealed game (status set in restoreRevealedGame)
-            if (!todaysCompletion.revealed) {
-                setStatus(`Today's daily word (completed)`);
-            }
+            
+            // Wait a moment for the DOM to update before transitioning
+            setTimeout(() => {
+                updateLayout();
+                slideToScreen('gameScreen');
+                // Don't override status if it was a revealed game (status set in restoreRevealedGame)
+                if (!todaysCompletion.revealed) {
+                    setStatus(`Today's daily word (completed)`);
+                }
+            }, 50);
         } else {
             // Start fresh game
             isDailyWord = true; // This is a daily word
