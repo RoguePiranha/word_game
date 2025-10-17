@@ -1359,8 +1359,8 @@ function getTodaysDailyCompletion(dailyWord) {
 function restoreCompletedGame(completion) {
     // Check if this was a revealed answer
     if (completion.revealed) {
-        // Restore the revealed state
-        restoreRevealedGame();
+        // Restore the revealed state (pass the word from completion)
+        restoreRevealedGame(completion.word);
         return;
     }
 
@@ -1414,8 +1414,11 @@ function restoreCompletedGame(completion) {
 }
 
 // Restore a revealed game (same display as when reveal was clicked)
-function restoreRevealedGame() {
-    console.log("restoreRevealedGame called, target:", target);
+function restoreRevealedGame(word) {
+    console.log("restoreRevealedGame called, word:", word);
+    
+    // Use the passed word parameter
+    const answerWord = word || target;
     
     // Mark game as over
     row = maxRows;
@@ -1439,16 +1442,16 @@ function restoreRevealedGame() {
     // Create a single row for the reveal
     const revealRow = document.createElement('div');
     revealRow.className = 'row';
-    revealRow.style.gridTemplateColumns = `repeat(${target.length}, 1fr)`;
+    revealRow.style.gridTemplateColumns = `repeat(${answerWord.length}, 1fr)`;
     revealRow.style.display = 'grid';
     revealRow.style.opacity = '1';
     revealRow.style.visibility = 'visible';
 
     // Create tiles with the answer already shown (NO animation, just static reveal)
-    for (let i = 0; i < target.length; i++) {
+    for (let i = 0; i < answerWord.length; i++) {
         const tile = document.createElement('div');
         tile.className = 'tile filled revealed';
-        tile.textContent = target[i].toUpperCase();
+        tile.textContent = answerWord[i].toUpperCase();
         revealRow.appendChild(tile);
     }
 
@@ -1459,7 +1462,7 @@ function restoreRevealedGame() {
     buildKeyboard();
     
     // Set status
-    setStatus(`Answer: ${target.toUpperCase()}`);
+    setStatus(`Answer: ${answerWord.toUpperCase()}`);
 
     // Show game over section immediately
     showGameOver("Better luck next time!");
