@@ -1912,6 +1912,12 @@ async function init() {
         const savedTheme = loadTheme();
         applyTheme(savedTheme);
 
+        // Ensure settings modal is hidden on init
+        const settingsModal = document.getElementById('settingsModal');
+        if (settingsModal) {
+            settingsModal.classList.add('hidden');
+        }
+
         // Show home screen instead of game
         showScreen('homeScreen');
 

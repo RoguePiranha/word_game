@@ -1166,8 +1166,9 @@ details.stats summary {
 	display: grid;
 	place-items: center;
 }
-.modal.hidden {
-	display: none;
+.modal.hidden,
+.settings-modal.hidden {
+	display: none !important;
 }
 .modal__backdrop {
 	position: absolute;
