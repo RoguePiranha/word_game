@@ -67,7 +67,6 @@ async function loadWords(len) {
             const res = await fetch(url, { cache: "no-cache" });
             if (res.ok) {
                 arr = await res.json();
-                console.log(`[words] loaded ${url} (${arr.length})`);
                 break;
             }
         } catch (_) { }
@@ -78,10 +77,9 @@ async function loadWords(len) {
         return [];
     }
 
-    // normalize + sanity log
+    // normalize
     const list = arr.map((w) => String(w).toLowerCase());
     wordCache[len] = list;
-    console.log(`[words] sample[${len}]:`, list.slice(0, 8));
     return list;
 }
 
@@ -285,12 +283,14 @@ async function syncPush() {
 
 /** === Stats === */
 function computeStats(history) {
-    if (!history.length) return { total: 0, wins: 0, winRate: 0, currentStreak: 0, maxStreak: 0, perLen: {} };
+    if (!history.length) return { total: 0, wins: 0, winRate: 0, currentStreak: 0, maxStreak: 0, totalGuesses: 0, perLen: {} };
     let cur = 0,
         max = 0,
         total = history.length,
-        wins = 0;
+        wins = 0,
+        totalGuesses = 0;
     for (const h of history) {
+        totalGuesses += (h.guesses || 0); // Add number of guesses from each game
         if (h.won) {
             wins++;
             cur++;
@@ -304,7 +304,7 @@ function computeStats(history) {
         perLen[len] = { total: items.length, wins: w, winRate: items.length ? Math.round((100 * w) / items.length) : 0 };
     }
     const hintsUsed = loadHintsUsed();
-    return { total, wins, winRate: Math.round((100 * wins) / total), currentStreak: cur, maxStreak: max, perLen, hintsUsed };
+    return { total, wins, winRate: Math.round((100 * wins) / total), currentStreak: cur, maxStreak: max, totalGuesses, perLen, hintsUsed };
 }
 function updateStats(stats) {
     const hist = loadHistory();
@@ -382,14 +382,12 @@ function updateLayout() {
 
 /** === Board & Input === */
 function buildBoard() {
-    console.log("buildBoard called, maxRows:", maxRows, "wordLen:", wordLen);
     const board = getBoard();
     board.innerHTML = "";
     board.style.gridTemplateRows = `repeat(${maxRows}, 1fr)`;
     board.style.display = "grid";
     board.style.opacity = "1";
     board.style.visibility = "visible";
-    console.log("Board element:", board, "innerHTML cleared, styles set");
 
     // Hide game over section when building a new board
     hideGameOver();
@@ -409,9 +407,7 @@ function buildBoard() {
             rowEl.appendChild(t);
         }
         board.appendChild(rowEl);
-        console.log("Added row", r, "with", wordLen, "tiles");
     }
-    console.log("Board built with", maxRows, "rows");
     grid = Array.from({ length: maxRows }, () => Array(wordLen).fill(""));
     row = 0;
     col = 0;
@@ -776,6 +772,7 @@ function openResultModal({ len, word, guesses, won }) {
     document.getElementById("mCurrent").textContent = s.currentStreak || 0;
     document.getElementById("mMax").textContent = s.maxStreak || 0;
     document.getElementById("mHints").textContent = s.hintsUsed || 0;
+    document.getElementById("mGuesses").textContent = s.totalGuesses || 0;
 
     const tries = `${guesses}/${ATTEMPTS[len][difficulty]}`;
 
@@ -796,10 +793,8 @@ function openResultModal({ len, word, guesses, won }) {
 
     // Fireworks only on win
     if (won) {
-        console.log("Starting fireworks!");
         startFireworks(3000);
     } else {
-        console.log("No fireworks - game lost");
         stopFireworks();
     }
 }
@@ -816,19 +811,16 @@ let fxRAF = null,
     fxRunning = false,
     fxParts = [];
 function startFireworks(durationMs = 1500) {
-    console.log("startFireworks called with duration:", durationMs);
     const cvs = document.getElementById("fx");
     if (!cvs) {
         console.error("Canvas element 'fx' not found!");
         return;
     }
-    console.log("Canvas found:", cvs);
     const ctx = cvs.getContext("2d");
     if (!ctx) {
         console.error("Could not get 2d context!");
         return;
     }
-    console.log("Context obtained:", ctx);
     const DPR = Math.max(1, window.devicePixelRatio || 1);
     function resize() {
         cvs.width = innerWidth * DPR;
@@ -867,7 +859,6 @@ function startFireworks(durationMs = 1500) {
 
     fxRunning = true;
     const start = performance.now();
-    console.log("Starting animation loop, particles:", fxParts.length);
     (function tick() {
         fxRAF = requestAnimationFrame(tick);
         ctx.clearRect(0, 0, cvs.width, cvs.height);
@@ -883,7 +874,6 @@ function startFireworks(durationMs = 1500) {
         }
         fxParts = fxParts.filter((p) => p.life > 0);
         if (performance.now() - start > durationMs && fxParts.length === 0) {
-            console.log("Fireworks completed");
             stopFireworks();
         }
     })();
@@ -916,16 +906,22 @@ document.querySelectorAll(".diffA").forEach((b) => {
         await resetGame(wordLen);
     });
 });
-document.getElementById("hard").addEventListener("click", (e) => {
+document.getElementById("hard")?.addEventListener("click", (e) => {
     hardMode = !hardMode;
     e.currentTarget.setAttribute("aria-checked", String(hardMode));
     e.currentTarget.textContent = `Strict: ${hardMode ? "On" : "Off"}`;
     e.currentTarget.style.outline = hardMode ? "2px solid var(--accent)" : "none";
     setStatus(hardMode ? "Strict mode enabled." : "Strict mode disabled.");
 });
-document.getElementById("new").onclick = () => resetGame(wordLen);
-document.getElementById("reveal").onclick = () => revealAnswer();
-document.getElementById("newWordBtn").onclick = () => resetGame(wordLen);
+const newBtn = document.getElementById("new");
+if (newBtn) newBtn.onclick = () => resetGame(wordLen);
+
+const revealBtn = document.getElementById("reveal");
+if (revealBtn) revealBtn.onclick = () => revealAnswer();
+
+const newWordBtn = document.getElementById("newWordBtn");
+if (newWordBtn) newWordBtn.onclick = () => resetGame(wordLen);
+
 document.getElementById("copy").onclick = () => {
     const emoji = renderShare();
     navigator.clipboard.writeText(emoji).then(() => setStatus("Result copied to clipboard."));
@@ -937,25 +933,35 @@ document.getElementById("hint").onclick = () => {
 // document.getElementById("themeToggle").onclick = () => {
 // 	toggleTheme();
 // };
-document.getElementById("resetSeen").onclick = () => {
-    clearSeen(wordLen);
-    setStatus(`Cleared seen for ${wordLen}-letter.`);
-};
-document.getElementById("exportBtn").onclick = async () => {
-    try {
-        const r = await fetch(`${WORKER_BASE}/export`, { headers: { "X-WordGuess-User": userId } });
-        const blob = await r.blob();
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = `wordguess-${userId}.json`;
-        a.click();
-        URL.revokeObjectURL(a.href);
-        setStatus("Exported.");
-    } catch {
-        setStatus("Export failed.");
-    }
-};
-document.getElementById("importFile").onchange = async (e) => {
+const resetSeenBtn = document.getElementById("resetSeen");
+if (resetSeenBtn) {
+    resetSeenBtn.onclick = () => {
+        clearSeen(wordLen);
+        setStatus(`Cleared seen for ${wordLen}-letter.`);
+    };
+}
+
+const exportBtnOld = document.getElementById("exportBtn");
+if (exportBtnOld) {
+    exportBtnOld.onclick = async () => {
+        try {
+            const r = await fetch(`${WORKER_BASE}/export`, { headers: { "X-WordGuess-User": userId } });
+            const blob = await r.blob();
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = `wordguess-${userId}.json`;
+            a.click();
+            URL.revokeObjectURL(a.href);
+            setStatus("Exported.");
+        } catch {
+            setStatus("Export failed.");
+        }
+    };
+}
+
+const importFileOld = document.getElementById("importFile");
+if (importFileOld) {
+    importFileOld.onchange = async (e) => {
     const f = e.target.files?.[0];
     if (!f) return;
     try {
@@ -984,7 +990,8 @@ document.getElementById("importFile").onchange = async (e) => {
     } catch {
         setStatus("Import failed.");
     }
-};
+    };
+}
 
 /** === PWA Installation === */
 let deferredPrompt;
@@ -997,11 +1004,13 @@ window.addEventListener("beforeinstallprompt", (e) => {
     // Stash the event so it can be triggered later
     deferredPrompt = e;
     // Show the install button
-    installBtn.classList.remove("btn-hidden");
+    if (installBtn) installBtn.classList.remove("btn-hidden");
 });
 
 // Handle install button click
-document.getElementById("installBtn").onclick = async () => {
+const installBtnHandler = document.getElementById("installBtn");
+if (installBtnHandler) {
+    installBtnHandler.onclick = async () => {
     if (!deferredPrompt) {
         // Fallback for iOS and other browsers
         setStatus("To install: tap Share → Add to Home Screen");
@@ -1021,13 +1030,14 @@ document.getElementById("installBtn").onclick = async () => {
 
     // Clear the saved prompt since it can't be used again
     deferredPrompt = null;
-    installBtn.classList.add("btn-hidden");
-};
+    if (installBtn) installBtn.classList.add("btn-hidden");
+    };
+}
 
 // Handle successful installation
 window.addEventListener("appinstalled", () => {
     setStatus("Word Guess installed successfully! 🎉");
-    installBtn.classList.add("btn-hidden");
+    if (installBtn) installBtn.classList.add("btn-hidden");
     deferredPrompt = null;
 });
 
@@ -1111,13 +1121,12 @@ function wireModalHandlers() {
     });
     document.getElementById("modalSettingsBtn")?.addEventListener("click", () => {
         closeWinModal();
-        // Navigate to game screen if not already there
-        showScreen('gameScreen');
-        // Open settings panel
-        setTimeout(() => {
-            document.getElementById("settings")?.setAttribute("open", "");
-            window.scrollTo({ top: 0, behavior: "smooth" });
-        }, 100);
+        // Open settings modal
+        const settingsModal = document.getElementById('settingsModal');
+        if (settingsModal) {
+            settingsModal.classList.remove('hidden');
+            updateSettingsUI();
+        }
     });
     document.getElementById("modalShareBtn")?.addEventListener("click", () => {
         const emoji = renderShare();
@@ -1125,28 +1134,6 @@ function wireModalHandlers() {
     });
 }
 wireModalHandlers();
-
-/** === Settings Panel Click-Outside-to-Close === */
-function wireSettingsHandlers() {
-    const settingsDetails = document.getElementById("settings");
-    const settingsPanel = document.querySelector(".settings-panel");
-
-    // Listen for clicks on the document
-    document.addEventListener("click", (e) => {
-        // Only proceed if settings panel is open
-        if (!settingsDetails || !settingsDetails.open) return;
-
-        // Check if click is outside the settings panel and its summary
-        const isClickInsidePanel = settingsPanel?.contains(e.target);
-        const isClickOnSummary = settingsDetails.querySelector("summary")?.contains(e.target);
-
-        // If click is outside both the panel and summary, close the settings
-        if (!isClickInsidePanel && !isClickOnSummary) {
-            settingsDetails.removeAttribute("open");
-        }
-    });
-}
-wireSettingsHandlers();
 
 /** === Theme Toggle === */
 function wireThemeToggle() {
@@ -1160,6 +1147,251 @@ function wireThemeToggle() {
     });
 }
 wireThemeToggle();
+
+/** === Settings Modal === */
+function wireSettingsModal() {
+    const settingsToggle = document.getElementById('settingsToggle');
+    const settingsModal = document.getElementById('settingsModal');
+    
+    if (!settingsToggle || !settingsModal) return;
+
+    // Open modal
+    settingsToggle.addEventListener('click', () => {
+        settingsModal.classList.remove('hidden');
+        updateSettingsUI();
+    });
+
+    // Close modal
+    const closeButtons = settingsModal.querySelectorAll('[data-close]');
+    closeButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            settingsModal.classList.add('hidden');
+        });
+    });
+
+    // Close on backdrop click
+    settingsModal.addEventListener('click', (e) => {
+        if (e.target === settingsModal) {
+            settingsModal.classList.add('hidden');
+        }
+    });
+
+    // ESC key to close
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !settingsModal.classList.contains('hidden')) {
+            settingsModal.classList.add('hidden');
+        }
+    });
+
+    // Word length buttons
+    const lengthButtons = settingsModal.querySelectorAll('.btn-length');
+    lengthButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const len = parseInt(btn.dataset.length);
+            if (len === wordLen) return;
+            
+            lengthButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            resetGame(len);
+            settingsModal.classList.add('hidden');
+        });
+    });
+
+    // Strict mode toggle
+    const strictToggle = settingsModal.querySelector('#strictModeToggle');
+    if (strictToggle) {
+        strictToggle.addEventListener('change', (e) => {
+            hardMode = e.target.checked;
+            localStorage.setItem('wg-strict', hardMode);
+            setStatus(`Strict Mode: ${hardMode ? 'ON' : 'OFF'}`);
+        });
+    }
+
+    // Difficulty buttons
+    const difficultyButtons = settingsModal.querySelectorAll('.btn-difficulty');
+    difficultyButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const diff = btn.dataset.difficulty;
+            if (diff === difficulty) return;
+            
+            difficultyButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            difficulty = diff;
+            localStorage.setItem('wg-difficulty', difficulty);
+            resetGame(wordLen);
+            settingsModal.classList.add('hidden');
+        });
+    });
+
+    // Reveal button
+    const revealBtn = settingsModal.querySelector('#revealBtn');
+    if (revealBtn) {
+        revealBtn.addEventListener('click', () => {
+            if (confirm('Are you sure you want to reveal the answer? This will end the game.')) {
+                revealAnswer();
+                settingsModal.classList.add('hidden');
+            }
+        });
+    }
+
+    // Reset seen words
+    const resetSeenBtn = settingsModal.querySelector('#resetSeenBtn');
+    if (resetSeenBtn) {
+        resetSeenBtn.addEventListener('click', () => {
+            if (confirm('Reset all seen words? This will allow you to replay words you\'ve already seen.')) {
+                for (let len = 4; len <= 8; len++) {
+                    localStorage.removeItem(`wg-used-${len}`);
+                }
+                setStatus('Seen words reset!');
+            }
+        });
+    }
+
+    // Export data
+    const exportBtn = settingsModal.querySelector('#exportBtn');
+    if (exportBtn) {
+        exportBtn.addEventListener('click', () => {
+            const data = {};
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key.startsWith('wg-')) {
+                    data[key] = localStorage.getItem(key);
+                }
+            }
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'word-game-data.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            setStatus('Data exported!');
+        });
+    }
+
+    // Import data
+    const importBtn = settingsModal.querySelector('#importBtn');
+    const importFile = settingsModal.querySelector('#importFile');
+    if (importBtn && importFile) {
+        importBtn.addEventListener('click', () => {
+            importFile.click();
+        });
+        
+        importFile.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                try {
+                    const data = JSON.parse(ev.target.result);
+                    Object.keys(data).forEach(key => {
+                        if (key.startsWith('wg-')) {
+                            localStorage.setItem(key, data[key]);
+                        }
+                    });
+                    setStatus('Data imported! Refreshing...');
+                    setTimeout(() => location.reload(), 1000);
+                } catch (err) {
+                    setStatus('Import failed: Invalid file');
+                }
+            };
+            reader.readAsText(file);
+        });
+    }
+
+    // Install app button
+    const installBtn = settingsModal.querySelector('#installBtn');
+    const installSection = settingsModal.querySelector('#installSection');
+    
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        if (installSection) installSection.classList.remove('hidden');
+    });
+
+    if (installBtn) {
+        installBtn.addEventListener('click', async () => {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') {
+                setStatus('App installed!');
+            }
+            deferredPrompt = null;
+            if (installSection) installSection.classList.add('hidden');
+        });
+    }
+
+    // Reset stats button
+    const resetStatsBtn = settingsModal.querySelector('#resetStatsBtn');
+    if (resetStatsBtn) {
+        resetStatsBtn.addEventListener('click', () => {
+            if (confirm('Are you sure you want to reset all statistics? This cannot be undone.')) {
+                localStorage.removeItem('wg-stats');
+                stats = { played: 0, wins: 0, current: 0, max: 0, hints: 0 };
+                updateStats();
+                setStatus('Statistics reset!');
+            }
+        });
+    }
+}
+
+function updateSettingsUI() {
+    const settingsModal = document.getElementById('settingsModal');
+    if (!settingsModal) return;
+
+    // Update word length buttons
+    const lengthButtons = settingsModal.querySelectorAll('.btn-length');
+    lengthButtons.forEach(btn => {
+        const len = parseInt(btn.dataset.length);
+        btn.classList.toggle('active', len === wordLen);
+    });
+
+    // Update strict mode toggle
+    const strictToggle = settingsModal.querySelector('#strictModeToggle');
+    if (strictToggle) {
+        strictToggle.checked = hardMode;
+    }
+
+    // Update difficulty buttons
+    const difficultyButtons = settingsModal.querySelectorAll('.btn-difficulty');
+    difficultyButtons.forEach(btn => {
+        const isActive = btn.dataset.difficulty === difficulty;
+        btn.classList.toggle('active', isActive);
+    });
+
+    // Show/hide reveal section
+    const revealSection = settingsModal.querySelector('#revealSection');
+    if (revealSection) {
+        if (row > 0 && !gameOver) {
+            revealSection.classList.remove('hidden');
+        } else {
+            revealSection.classList.add('hidden');
+        }
+    }
+
+    // Update stats
+    const currentStats = computeStats(loadHistory());
+    const statsElements = {
+        sPlayed: currentStats.total || 0,
+        sWins: currentStats.wins || 0,
+        sCurrent: currentStats.currentStreak || 0,
+        sMax: currentStats.maxStreak || 0,
+        sHints: currentStats.hintsUsed || 0,
+        sGuesses: currentStats.totalGuesses || 0
+    };
+
+    Object.entries(statsElements).forEach(([id, value]) => {
+        const el = settingsModal.querySelector(`#${id}`);
+        if (el) el.textContent = value;
+    });
+}
+
+wireSettingsModal();
 
 /** === Init / Reset === */
 async function resetGame(len = wordLen) {
@@ -1352,10 +1584,8 @@ function getTodaysDailyCompletion(dailyWord) {
 
 // Restore a completed game state
 function restoreCompletedGame(completion) {
-    console.log("restoreCompletedGame called with:", completion);
     // Check if this was a revealed answer
     if (completion.revealed) {
-        console.log("Calling restoreRevealedGame with word:", completion.word);
         // Restore the revealed state (pass the word from completion)
         restoreRevealedGame(completion.word);
         return;
@@ -1398,25 +1628,12 @@ function restoreCompletedGame(completion) {
     setTimeout(() => {
         showGameOver(message);
     }, 100);
-
-    // Show the result modal immediately
-    setTimeout(() => {
-        openResultModal({
-            len: wordLen,
-            word: target,
-            guesses: guesses.length,
-            won: completion.won
-        });
-    }, 500);
 }
 
 // Restore a revealed game (same display as when reveal was clicked)
 function restoreRevealedGame(word) {
-    console.log("restoreRevealedGame called, word:", word);
-    
     // Use the passed word parameter
     const answerWord = word || target;
-    console.log("Using answerWord:", answerWord);
     
     if (!answerWord) {
         console.error("No word available for reveal restoration!");
@@ -1446,7 +1663,6 @@ function restoreRevealedGame(word) {
 
     // Set board to show only 1 row (CRITICAL for reveal state)
     board.style.gridTemplateRows = '1fr';
-    console.log("Board gridTemplateRows set to '1fr'");
 
     // Create a single row for the reveal
     const revealRow = document.createElement('div');
@@ -1477,21 +1693,19 @@ function restoreRevealedGame(word) {
 
     // Show game over section immediately
     showGameOver("Better luck next time!");
-    console.log("restoreRevealedGame complete");
 }
 
 // Setup navigation event listeners
 function setupNavigationListeners() {
-    console.log("setupNavigationListeners called");
+    const dailyWordBtn = document.getElementById('dailyWordBtn');
     const quickStartBtn = document.getElementById('quickStartBtn');
-    console.log("quickStartBtn element:", quickStartBtn);
 
-    // Navigation button handlers
-    quickStartBtn?.addEventListener('click', async () => {
-        console.log("Quick Start clicked!");
+    // Daily Word button - today's daily word
+    dailyWordBtn?.addEventListener('click', async () => {
         gameMode = "standard";
         wordLen = 5;
         difficulty = "base";
+        localStorage.setItem('wg-difficulty', difficulty);
         maxRows = ATTEMPTS[wordLen][difficulty];
 
         const list = await loadWords(wordLen);
@@ -1502,10 +1716,8 @@ function setupNavigationListeners() {
 
         // Check if today's daily word has already been completed
         const todaysCompletion = getTodaysDailyCompletion(target);
-        console.log("todaysCompletion:", todaysCompletion);
 
         if (todaysCompletion) {
-            console.log("Restoring completed daily word, revealed:", todaysCompletion.revealed);
             // Restore the completed game
             isDailyWord = false; // Don't save again
             completedGuesses = todaysCompletion.guesses || [];
@@ -1521,6 +1733,16 @@ function setupNavigationListeners() {
                 if (!todaysCompletion.revealed) {
                     setStatus(`Today's daily word (completed)`);
                 }
+                
+                // Open the result modal after screen transition completes
+                setTimeout(() => {
+                    openResultModal({
+                        len: wordLen,
+                        word: target,
+                        guesses: todaysCompletion.guesses.length,
+                        won: todaysCompletion.won
+                    });
+                }, 400);
             }, 50);
         } else {
             // Start fresh game
@@ -1537,6 +1759,35 @@ function setupNavigationListeners() {
             slideToScreen('gameScreen');
             setStatus(`Daily 5-letter word • Attempts: ${maxRows}. Good luck!`);
         }
+    });
+
+    // Quick Start button - random word
+    quickStartBtn?.addEventListener('click', async () => {
+        gameMode = "standard";
+        wordLen = 5;
+        difficulty = "base";
+        localStorage.setItem('wg-difficulty', difficulty);
+        maxRows = ATTEMPTS[wordLen][difficulty];
+
+        const list = await loadWords(wordLen);
+        WORDS[wordLen] = list;
+        VALID[wordLen] = list;
+        target = await pickTarget(wordLen); // Random word
+        localStorage.setItem(`wg-current-${wordLen}`, target);
+
+        // Start fresh game
+        isDailyWord = false; // Not a daily word
+        completedGuesses = [];
+        row = 0;
+        col = 0;
+        grid = [];
+        kbState = {};
+        currentGameHints = 0;
+        buildBoard();
+        buildKeyboard();
+        updateLayout();
+        slideToScreen('gameScreen');
+        setStatus(`Random 5-letter word • Attempts: ${maxRows}. Good luck!`);
     });
 
     document.getElementById('selectModeBtn')?.addEventListener('click', () => {
@@ -1656,7 +1907,6 @@ function removeTimerDisplay() {
 }
 
 async function init() {
-    console.log("Init starting...");
     try {
         // Initialize theme first
         const savedTheme = loadTheme();
@@ -1673,7 +1923,6 @@ async function init() {
 
         addEventListener("resize", updateLayout);
         document.getElementById("statsPanel")?.addEventListener("toggle", updateLayout);
-        console.log("Init completed successfully");
     } catch (e) {
         console.error("Init error:", e);
         showScreen('homeScreen'); // Show home even on error

@@ -104,6 +104,14 @@
 						</div>
 						<div class="lbl">Hints Used</div>
 					</div>
+					<div class="stat">
+						<div
+							class="num"
+							id="mGuesses">
+							0
+						</div>
+						<div class="lbl">Total Guesses</div>
+					</div>
 				</div>
 
 				<div class="modal__actions">
@@ -131,6 +139,216 @@
 				</div>
 			</div>
 		</div>
+
+		<!-- Settings Modal -->
+		<div id="settingsModal" class="modal settings-modal hidden">
+			<div class="modal__backdrop" data-close></div>
+			<div class="modal__panel settings-modal__panel">
+				<button class="modal__close" data-close aria-label="Close settings">
+					<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<line x1="18" y1="6" x2="6" y2="18"></line>
+						<line x1="6" y1="6" x2="18" y2="18"></line>
+					</svg>
+				</button>
+
+				<div class="settings-panel">
+					<h2 class="settings-title">Settings</h2>
+
+					<section class="setting-group">
+						<h3 class="setting-label">Word Length</h3>
+						<div class="btn-group">
+							<button
+								class="btn btn-length"
+								data-length="4">
+								4
+							</button>
+							<button
+								class="btn btn-length"
+								data-length="5">
+								5
+							</button>
+							<button
+								class="btn btn-length"
+								data-length="6">
+								6
+							</button>
+							<button
+								class="btn btn-length"
+								data-length="7">
+								7
+							</button>
+							<button
+								class="btn btn-length"
+								data-length="8">
+								8
+							</button>
+						</div>
+					</section>
+
+					<section class="setting-group">
+						<div class="setting-row">
+							<label
+								for="strictModeToggle"
+								class="setting-label">
+								Strict Mode
+							</label>
+							<label class="toggle">
+								<input
+									type="checkbox"
+									id="strictModeToggle" />
+								<span class="toggle-slider"></span>
+							</label>
+						</div>
+						<p class="setting-help">
+							Letters must be reused at their exact positions.
+						</p>
+					</section>
+
+					<section class="setting-group">
+						<h3 class="setting-label">Difficulty</h3>
+						<div class="btn-group">
+							<button
+								class="btn btn-difficulty"
+								data-difficulty="base">
+								Base
+							</button>
+							<button
+								class="btn btn-difficulty"
+								data-difficulty="hard">
+								Hard
+							</button>
+							<button
+								class="btn btn-difficulty"
+								data-difficulty="expert">
+								Expert
+							</button>
+							<button
+								class="btn btn-difficulty"
+								data-difficulty="impossible">
+								Impossible
+							</button>
+						</div>
+					</section>
+
+					<section
+						class="setting-group reveal-section hidden"
+						id="revealSection">
+						<h3 class="setting-label">Reveal Answer</h3>
+						<p class="setting-help">
+							Give up and reveal the word. This will end the game
+							immediately.
+						</p>
+						<button
+							class="btn btn-danger"
+							id="revealBtn">
+							Reveal
+						</button>
+					</section>
+
+					<section class="setting-group">
+						<button
+							class="btn"
+							id="resetSeenBtn">
+							Reset Seen Words
+						</button>
+					</section>
+
+					<section class="setting-group">
+						<button
+							class="btn"
+							id="exportBtn">
+							Export Data
+						</button>
+					</section>
+
+					<section class="setting-group">
+						<button
+							class="btn"
+							id="importBtn">
+							Import Data
+						</button>
+						<input
+							type="file"
+							id="importFile"
+							accept=".json"
+							class="hidden" />
+					</section>
+
+					<section
+						class="setting-group hidden"
+						id="installSection">
+						<button
+							class="btn btn-primary"
+							id="installBtn">
+							Install App
+						</button>
+					</section>
+
+					<details class="stats-details">
+						<summary class="stats-summary">Statistics</summary>
+						<div class="stats-panel">
+							<div class="stats-grid">
+								<div class="stat">
+									<div
+										class="num"
+										id="sPlayed">
+										0
+									</div>
+									<div class="lbl">Played</div>
+								</div>
+								<div class="stat">
+									<div
+										class="num"
+										id="sWins">
+										0
+									</div>
+									<div class="lbl">Wins</div>
+								</div>
+								<div class="stat">
+									<div
+										class="num"
+										id="sCurrent">
+										0
+									</div>
+									<div class="lbl">Current Streak</div>
+								</div>
+								<div class="stat">
+									<div
+										class="num"
+										id="sMax">
+										0
+									</div>
+									<div class="lbl">Max Streak</div>
+								</div>
+								<div class="stat">
+									<div
+										class="num"
+										id="sHints">
+										0
+									</div>
+									<div class="lbl">Hints Used</div>
+								</div>
+								<div class="stat">
+									<div
+										class="num"
+										id="sGuesses">
+										0
+									</div>
+									<div class="lbl">Total Guesses</div>
+								</div>
+							</div>
+
+							<button
+								class="btn"
+								id="resetStatsBtn">
+								Reset Stats
+							</button>
+						</div>
+					</details>
+				</div>
+			</div>
+		</div>
+
 		<canvas
 			id="fx"
 			class="fx"
@@ -154,18 +372,35 @@
 			</svg>
 		</button>
 
+		<!-- Settings Toggle Button -->
+		<button id="settingsToggle" class="settings-toggle" aria-label="Open settings" title="Settings">
+			<svg class="settings-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+				<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+			</svg>
+		</button>
+
 		<!-- Home Screen -->
 		<div class="screen" id="homeScreen">
 			<div class="home-container">
 				<h1 class="home-title">WORD GUESS</h1>
 				<p class="home-subtitle">Challenge your vocabulary</p>
 				<div class="home-buttons">
+					<button class="home-btn home-btn-daily" id="dailyWordBtn">
+						<svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+							<rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+							<line x1="16" y1="2" x2="16" y2="6"></line>
+							<line x1="8" y1="2" x2="8" y2="6"></line>
+							<line x1="3" y1="10" x2="21" y2="10"></line>
+						</svg>
+						<span class="btn-text">Daily Word</span>
+						<span class="btn-hint">Daily 5-Letter Word</span>
+					</button>
 					<button class="home-btn home-btn-primary" id="quickStartBtn">
 						<svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 							<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
 						</svg>
 						<span class="btn-text">Quick Start</span>
-						<span class="btn-hint">Daily 5-Letter Word</span>
+						<span class="btn-hint">Random 5-Letter Word</span>
 					</button>
 					<button class="home-btn home-btn-secondary" id="selectModeBtn">
 						<svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -311,218 +546,6 @@
 					id="hint">
 					Hint
 				</div>
-				<details
-					id="settings"
-					class="settings">
-					<summary
-						aria-label="Settings"
-						title="Settings">
-						<svg class="settings-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-							<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
-						</svg>
-					</summary>
-					<div class="settings-panel">
-						<div
-							class="controls"
-							role="group"
-							aria-label="Length & Mode">
-							<span class="config">Word Length:</span>
-							<button
-								class="btn diffL"
-								data-len="4"
-								aria-pressed="false">
-								4
-							</button>
-							<button
-								class="btn diffL"
-								data-len="5"
-								aria-pressed="true">
-								5
-							</button>
-							<button
-								class="btn diffL"
-								data-len="6"
-								aria-pressed="false">
-								6
-							</button>
-							<button
-								class="btn diffL"
-								data-len="7"
-								aria-pressed="false">
-								7
-							</button>
-							<button
-								class="btn diffL"
-								data-len="8"
-								aria-pressed="false">
-								8
-							</button>
-							<span
-								class="btn"
-								id="hard"
-								role="switch"
-								aria-checked="false"
-								title="Strict mode: must use revealed hints"
-								>Strict: Off</span
-							>
-						</div>
-
-						<div
-							class="controls"
-							role="group"
-							aria-label="Attempts Difficulty">
-							<span class="config">Difficulty:</span>
-							<button
-								class="btn diffA"
-								data-diff="base"
-								aria-pressed="true">
-								Base
-							</button>
-							<button
-								class="btn diffA"
-								data-diff="hard"
-								aria-pressed="false">
-								Hard
-							</button>
-							<button
-								class="btn diffA"
-								data-diff="expert"
-								aria-pressed="false">
-								Expert
-							</button>
-							<button
-								class="btn diffA"
-								data-diff="impossible"
-								aria-pressed="false">
-								Impossible
-							</button>
-						</div>
-						
-						<div class="controls reveal-section">
-							<button
-								class="btn"
-								id="reveal">
-								Reveal Answer
-							</button>
-						</div>
-
-						<div class="controls">
-							<div
-								class="btn"
-								id="resetSeen">
-								Reset Seen
-							</div>
-							<div
-								class="btn"
-								id="exportBtn">
-								Export
-							</div>
-							<label
-								class="btn"
-								for="importFile"
-								>Import</label
-							>
-							<input
-								id="importFile"
-								type="file"
-								accept="application/json"
-								hidden />
-							<div
-								class="btn btn-hidden"
-								id="installBtn">
-								📱 Add to Home Screen
-							</div>
-						</div>
-
-						<details
-							class="stats"
-							id="statsPanel">
-							<summary>Stats</summary>
-							<div class="stats-grid">
-								<div class="stat">
-									<div
-										class="num"
-										id="stTotal">
-										0
-									</div>
-									<div class="lbl">Total Played</div>
-								</div>
-								<div class="stat">
-									<div
-										class="num"
-										id="stWinRate">
-										0%
-									</div>
-									<div class="lbl">Overall Win Rate</div>
-								</div>
-								<div class="stat">
-									<div
-										class="num"
-										id="stCurrent">
-										0
-									</div>
-									<div class="lbl">Current Streak</div>
-								</div>
-								<div class="stat">
-									<div
-										class="num"
-										id="stMax">
-										0
-									</div>
-									<div class="lbl">Max Streak</div>
-								</div>
-								<div class="stat">
-									<div
-										class="num"
-										id="stHints">
-										0
-									</div>
-									<div class="lbl">Hints Used</div>
-								</div>
-								<div class="stat">
-									<div
-										class="num"
-										id="stL4">
-										0% (0)
-									</div>
-									<div class="lbl">4-letter WR</div>
-								</div>
-								<div class="stat">
-									<div
-										class="num"
-										id="stL5">
-										0% (0)
-									</div>
-									<div class="lbl">5-letter WR</div>
-								</div>
-								<div class="stat">
-									<div
-										class="num"
-										id="stL6">
-										0% (0)
-									</div>
-									<div class="lbl">6-letter WR</div>
-								</div>
-								<div class="stat">
-									<div
-										class="num"
-										id="stL7">
-										0% (0)
-									</div>
-									<div class="lbl">7-letter WR</div>
-								</div>
-								<div class="stat">
-									<div
-										class="num"
-										id="stL8">
-										0% (0)
-									</div>
-									<div class="lbl">8-letter WR</div>
-								</div>
-							</div>
-						</details>
-					</div>
-				</details>
 			</header>
 
 			<main
